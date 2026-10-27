@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Keuangan Lembaga Pendidikan</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #2b3e42; margin: 0; padding: 15px; color: #fff; }
+        .container { max-width: 1250px; margin: 0 auto; background: #34495e; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        
+        /* --- STYLING HALAMAN LOGIN --- */
+        #section-login { display: none; }
+        #section-login.active { 
+            display: flex !important; 
+            justify-content: center !important; 
+            align-items: center !important; 
+            min-height: 80vh !important; 
+        }
+        .login-wrapper { display: grid; grid-template-columns: 1fr 1fr; width: 900px; background: #2c3e50; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #4e6d8c; }
+        @media (max-width: 768px) { .login-wrapper { grid-template-columns: 1fr; width: 100%; } }
+        
+        .login-left { padding: 40px; display: flex; flex-direction: column; justify-content: center; background: #243342; border-right: 1px solid #4e6d8c; }
+        .login-left h2 { color: #f1c40f; margin-top: 0; font-size: 26px; }
+        .login-left p { color: #bdc3c7; font-size: 13px; line-height: 1.6; }
+        
+        .login-right { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+        .login-right h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #27ae60; padding-bottom: 8px; display: inline-block; }
+        
+        .login-btn { background: #27ae60; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; font-size: 14px; margin-top: 10px; }
+        .login-btn:hover { background: #219653; }
+        
+        /* Tab Navigasi Utama */
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #4e6d8c; padding-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { background: #2c3e50; color: #fff; border: 1px solid #7f8c8d; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 13px; }
+        .tab-btn.active { background: #27ae60; border-color: #27ae60; }
+        .tab-btn-konsolidasi { background: #8e44ad !important; border-color: #9b59b6 !important; }
+        .tab-btn-konsolidasi.active { background: #6c3483 !important; border-color: #8e44ad !important; }
+
+        /* Badge Informasi Sesi User */
+        .session-badge { font-size: 11px; color: #bdc3c7; background: #2c3e50; padding: 8px 12px; border-radius: 4px; border: 1px solid #4e6d8c; font-weight: 600; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px; }
+        .session-badge span { color: #f1c40f; }
+
+        .section-content { display: none; }
+        .section-content.active { display: block !important; }
+
+        /* Label Periode Laporan Minimalis */
+        .page-header-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .period-mini-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .period-mini { font-size: 11px; color: #bdc3c7; background: #2c3e50; padding: 8px 12px; border-radius: 4px; border: 1px solid #4e6d8c; font-weight: 600; letter-spacing: 0.5px; display: inline-flex; align-items: center; }
+        .period-mini span { color: #f1c40f; margin-left: 5px; }
+
+        /* Header Transaksi & Dropdown Kas/Bank */
+        .transaction-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; background: #2c3e50; padding: 12px 15px; border-radius: 6px; border: 1px solid #4e6d8c; }
+        .bank-select-wrapper { display: flex; align-items: center; gap: 10px; }
+        .bank-select-wrapper label { font-size: 13px; font-weight: bold; color: #f1c40f; }
+        
+        .bank-dropdown { 
+            background: #2c3e50; 
+            color: #fff; 
+            border: 1px solid #7f8c8d; 
+            padding: 8px 14px; 
+            border-radius: 4px; 
+            font-size: 13px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            outline: none; 
+        }
+        .bank-dropdown:focus { border-color: #3498db; background: #2c3e50; color: #fff; }
+        .bank-dropdown option { background: #2c3e50; color: #fff; padding: 10px; }
+
+        /* Info Akun Satu Baris di Atas Tabel */
+        .account-info-inline { display: flex; gap: 25px; font-size: 13px; }
+        .account-info-inline div span { font-weight: bold; color: #f1c40f; }
+
+        /* Tabel Umum Jurnal & COA */
+        .table-responsive { overflow-x: auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 950px; background: #fff; color: #333; }
+        th, td { border: 1px solid #b2babb; padding: 6px 8px; text-align: left; }
+        th { background-color: #5d6d7e; color: white; font-weight: bold; text-align: center; }
+        tfoot tr { background-color: #eaeded; font-weight: bold; color: #2c3e50; }
+        tr:nth-child(even) { background-color: #f8f9f9; }
+        
+        .row-group { background-color: #d5dbdb !important; font-weight: bold; }
+        .row-group input { font-weight: bold; color: #2c3e50; }
+
+        /* Warna Input saat Fokus / Diklik */
+        input, select { width: 100%; border: 1px solid transparent; background: transparent; padding: 4px; font-size: 12px; }
+        input:focus, select:focus { border: 1px solid #27ae60 !important; background: #ffffff !important; color: #000000 !important; outline: none; border-radius: 3px; font-weight: 600; }
+        
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .action-bar { display: flex; justify-content: space-between; margin-top: 15px; align-items: center; flex-wrap: wrap; gap: 10px; width: 100%; }
+        .btn-addRow { background: #27ae60; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-addRow:hover { background: #219653; }
+        
+        .btn-insert { background: #2980b9; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; margin-right: 2px; }
+        .btn-insert:hover { background: #1f618d; }
+
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+        .btn-delete:hover { background: #c0392b; }
+
+        .btn-reset { background: #c0392b; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-reset:hover { background: #962d22; }
+
+        /* --- DESAIN MODERN PROFILE SEIMBANG 2 KOLOM --- */
+        .profile-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        @media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+        .profile-card { background: #2c3e50; border: 1px solid #4e6d8c; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .profile-card h4 { margin-top: 0; margin-bottom: 15px; color: #f1c40f; border-bottom: 1px dashed #4e6d8c; padding-bottom: 8px; font-size: 15px; letter-spacing: 0.5px; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #bdc3c7; text-transform: uppercase; margin-bottom: 4px; }
+        .form-control-modern { width: 100%; background: #34495e; color: #fff; border: 1px solid #7f8c8d; padding: 8px 12px; border-radius: 4px; font-size: 13px; outline: none; }
+        .form-control-modern:focus { border-color: #27ae60 !important; background: #ffffff !important; color: #000000 !important; font-weight: 600; }
+
+        .form-row-multi { display: flex; gap: 8px; }
+        .form-row-multi select, .form-row-multi input { background: #34495e; color: #fff; border: 1px solid #7f8c8d; padding: 8px; border-radius: 4px; font-size: 12px; outline: none; }
+        .form-row-multi select:focus { border-color: #27ae60 !important; background: #ffffff !important; color: #000000 !important; font-weight: 600; }
+        
+        .badge-unit { background: #8e44ad; color: #fff; padding: 3px 7px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- SECTION LOGIN (GATEKEEPER) -->
+    <div id="section-login" class="section-content">
+        <div class="login-wrapper">
+            <div class="login-left">
+                <h2>Aplikasi Keuangan Terintegrasi</h2>
+                <p>Sistem manajemen pembukuan khusus lembaga pendidikan dan yayasan. Mendukung multi-unit, kontrol akses berbasis peran (Admin & User Unit), serta laporan keuangan real-time.</p>
+                <div style="margin-top: 20px; font-size: 12px; color: #95a5a6;">
+                    🔒 Keamanan berbasis <i>LocalStorage</i> browser. Pastikan data rutin di-backup.
+                </div>
+            </div>
+            <div class="login-right">
+                <h3>Silakan Masuk</h3>
+                
+                <div class="form-group">
+                    <label>Pilih Akun / Hak Akses</label>
+                    <select id="login_role" class="form-control-modern" onchange="toggleUnitDropdown(this.value)">
+                        <option value="admin">👑 Admin Pusat (Full Access)</option>
+                        <option value="unit">🏫 User Unit / Sekolah</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="wrapper_unit_login" style="display: none;">
+                    <label>Pilih Unit Akses</label>
+                    <select id="login_unit_target" class="form-control-modern">
+                        <!-- Otomatis diisi dari daftar unit -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Password Akses</label>
+                    <input type="password" id="login_password" class="form-control-modern" placeholder="Masukkan password...">
+                </div>
+
+                <button class="login-btn" onclick="prosesLogin()">Masuk ke Aplikasi 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Menu Navigasi Utama -->
+    <div class="tab-nav" id="mainTabNav" style="display: none;">
+        <button class="tab-btn" id="menuProfile" onclick="switchTab('profile', this)">Profile Lembaga</button>
+        <button class="tab-btn" id="menuCoa" onclick="switchTab('coa', this)">Setting Akun</button>
+        <button class="tab-btn" id="menuMitra" onclick="switchTab('mitra', this)">Data Mitra</button>
+        <button class="tab-btn" id="menuJurnal" onclick="switchTab('jurnal', this)">Input Transaksi</button>
+        <button class="tab-btn" id="menuPenyesuaian" onclick="switchTab('penyesuaian', this)">Penyesuaian</button>
+        <button class="tab-btn tab-btn-konsolidasi" id="menuKonsolidasi" onclick="switchTab('konsolidasi', this)">📊 Laporan Konsolidasi</button>
+        <button class="tab-btn" style="background: #c0392b; margin-left: auto;" onclick="prosesLogout()">Keluar (Logout)</button>
+    </div>
+
+    <!-- SECTION 0: PROFILE -->
+    <div id="section-profile" class="section-content">
+        <div class="profile-header-flex">
+            <div>
+                <h2 style="margin: 0 0 5px 0; color: #f1c40f;">Profile & Identitas Lembaga</h2>
+                <p style="margin: 0; font-size: 12px; color: #bdc3c7;">Atur informasi identitas organisasi dan periode pembukuan di sini. Data tersimpan otomatis.</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div id="sessionUserBadgeProfile" class="session-badge">👤 User: <span>-</span></div>
+                <button class="btn-addRow" style="background: #2980b9;" onclick="exportDataCadangan()">📥 Download Cadangan (.json)</button>
+                <label class="btn-addRow" style="background: #d35400; cursor: pointer; display: inline-flex; align-items: center;">
+                    📤 Upload / Restore Data
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importDataCadangan(event)">
+                </label>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <!-- KOLOM KIRI -->
+            <div>
+                <div class="profile-card" style="margin-bottom: 0;">
+                    <h4>🏢 Informasi Organisasi & Lembaga</h4>
+                    
+                    <div class="form-group">
+                        <label>Nama Organisasi / Yayasan</label>
+                        <input type="text" id="p_org" class="form-control-modern" value="YAYASAN PESANTREN MEDIA EXCEL" oninput="saveProfileData()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lembaga Pendidikan</label>
+                        <input type="text" id="p_lembaga" class="form-control-modern" value="PONDOK PESANTREN MEDIA EXCEL" oninput="saveProfileData()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>NPWP Organisasi</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="p_npwp1" class="form-control-modern text-center" value="000.000.000.0" oninput="saveProfileData()">
+                            <input type="text" id="p_npwp2" class="form-control-modern text-center" value="000" style="width: 100px;" oninput="saveProfileData()">
+                            <input type="text" id="p_npwp3" class="form-control-modern text-center" value="000" style="width: 100px;" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alamat Lengkap</label>
+                        <input type="text" id="p_alamat1" class="form-control-modern" value="Jl. Angan Angan" style="margin-bottom: 6px;" oninput="saveProfileData()">
+                        <input type="text" id="p_alamat2" class="form-control-modern" value="Kel. Bayangan - Kec. Jadi Kenyataan" oninput="saveProfileData()">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Kota / Kabupaten</label>
+                            <input type="text" id="p_kota" class="form-control-modern" value="Kota Tangtang" oninput="saveProfileData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Provinsi</label>
+                            <input type="text" id="p_prov" class="form-control-modern" value="Bantense" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Telepon / Mobile</label>
+                            <input type="text" id="p_telp" class="form-control-modern" value="0812-3456-789" oninput="saveProfileData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Kode Pos</label>
+                            <input type="text" id="p_kodepos" class="form-control-modern text-center" value="76111" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Email Resmi</label>
+                            <input type="text" id="p_email" class="form-control-modern" value="kurniawankuat@gmail.com" oninput="saveProfileData()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Website / Blog</label>
+                            <input type="text" id="p_web" class="form-control-modern" value="https://kuatkurniawan.blogspot.com" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 12px; border-top: 1px dashed #4e6d8c; padding-top: 12px; margin-bottom: 0;">
+                        <label>Bidang Organisasi</label>
+                        <input type="text" id="p_bidang" class="form-control-modern" value="Bidang Pendidikan & Pondok Pesantren" oninput="saveProfileData()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOLOM KANAN -->
+            <div>
+                <div class="profile-card" style="margin-bottom: 20px;">
+                    <h4>👤 Pimpinan & Personalia</h4>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;" class="form-group">
+                        <div>
+                            <label>Nama Ketua</label>
+                            <input type="text" id="p_namaketua" class="form-control-modern" value="Korenawan, S.H., M.H" oninput="saveProfileData()">
+                        </div>
+                        <div>
+                            <label>Jabatan</label>
+                            <input type="text" id="p_jabatanketua" class="form-control-modern" value="Ketua" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>NPWP Ketua</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="p_npwpketua1" class="form-control-modern text-center" value="00.000.000.0" oninput="saveProfileData()">
+                            <input type="text" id="p_npwpketua2" class="form-control-modern text-center" value="000" style="width: 80px;" oninput="saveProfileData()">
+                            <input type="text" id="p_npwpketua3" class="form-control-modern text-center" value="000" style="width: 80px;" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;" class="form-group">
+                        <div>
+                            <label>Nama Kepala / Pimpinan</label>
+                            <input type="text" id="p_namakepala" class="form-control-modern" value="Rizqy Falsenta, Lc" oninput="saveProfileData()">
+                        </div>
+                        <div>
+                            <label>Jabatan</label>
+                            <input type="text" id="p_jabatankepala" class="form-control-modern" value="Ketua Umum" oninput="saveProfileData()">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 0;" class="form-group">
+                        <div>
+                            <label>Nama Bendahara</label>
+                            <input type="text" id="p_namabendahara" class="form-control-modern" value="Daghtylifera, Ak" oninput="saveProfileData()">
+                        </div>
+                        <div>
+                            <label>Jabatan</label>
+                            <input type="text" id="p_jabatanbendahara" class="form-control-modern" value="Bendahara" oninput="saveProfileData()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-card" style="margin-top: 31px; margin-bottom: 0;">
+                    <h4>📅 Periode Buku & Laporan</h4>
+
+                    <div class="form-group">
+                        <label>Periode Awal Buku</label>
+                        <div class="form-row-multi">
+                            <select id="p_tglawal" onchange="saveProfileData()"></select>
+                            <select id="p_blnawal" onchange="saveProfileData()"></select>
+                            <select id="p_thnawal" onchange="saveProfileData()"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tanggal Laporan (Akhir Periode)</label>
+                        <div class="form-row-multi">
+                            <select id="p_tgllap" onchange="saveProfileData()"></select>
+                            <select id="p_blnlap" onchange="saveProfileData()"></select>
+                            <select id="p_thnlap" onchange="saveProfileData()"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 12px; border-top: 1px dashed #4e6d8c; padding-top: 12px; margin-bottom: 0;">
+                        <label>Filter / Periode Buku Aktif</label>
+                        <select id="p_periodeshow" class="form-control-modern" onchange="saveProfileData()">
+                            <option value="ALL">ALL (Semua Bulan)</option>
+                            <option value="Januari">Januari</option>
+                            <option value="Februari">Februari</option>
+                            <option value="Maret">Maret</option>
+                            <option value="April">April</option>
+                            <option value="Mei">Mei</option>
+                            <option value="Juni">Juni</option>
+                            <option value="Juli">Juli</option>
+                            <option value="Agustus">Agustus</option>
+                            <option value="September">September</option>
+                            <option value="Oktober">Oktober</option>
+                            <option value="November">November</option>
+                            <option value="Desember">Desember</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: JURNAL KAS & BANK -->
+    <div id="section-jurnal" class="section-content">
+        <div class="page-header-flex">
+            <h3 style="margin:0; color: #f1c40f;">Jurnal Transaksi Kas & Bank</h3>
+            <div class="period-mini-wrapper">
+                <div id="sessionUserBadgeJurnal" class="session-badge">👤 User: <span>-</span></div>
+                <div class="period-mini">PERIODE: <span id="labelPeriodeJurnal">-</span></div>
+            </div>
+        </div>
+
+        <div class="transaction-header">
+            <div class="bank-select-wrapper">
+                <label>PILIH KAS / BANK:</label>
+                <select id="bankDropdownSelect" class="bank-dropdown" onchange="gantiAkunBank(this.value)">
+                    <!-- Opsi kas/bank otomatis -->
+                </select>
+            </div>
+
+            <div class="account-info-inline">
+                <div>NAMA AKUN : <span id="lblNamaAkun">-</span></div>
+                <div>KODE AKUN : <span id="lblKodeAkun">-</span></div>
+                <div>SALDO AKHIR : <span id="headerSaldo">Rp 0</span></div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table id="jurnalTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;" class="text-center">NO</th>
+                        <th style="width: 95px;" class="text-center">TGL</th>
+                        <th style="width: 70px;" class="text-center">BUKTI</th>
+                        <th style="width: 180px;" class="text-center">NAMA MITRA</th>
+                        <th style="width: 210px;" class="text-center">DESKRIPSI TRANSAKSI</th>
+                        <th style="width: 200px;" class="text-center">AKUN TRANSAKSI (COA)</th>
+                        <th style="width: 110px;" class="text-center">PENERIMAAN</th>
+                        <th style="width: 110px;" class="text-center">PENGELUARAN</th>
+                        <th style="width: 110px;" class="text-center">SALDO</th>
+                        <th style="width: 80px;" class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyJurnal">
+                    <!-- Data Jurnal -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6"><strong>TOTAL KESELURUHAN:</strong></td>
+                        <td id="footerTotalPenerimaan" class="text-right">Rp 0</td>
+                        <td id="footerTotalPengeluaran" class="text-right">Rp 0</td>
+                        <td id="footerTotalSaldoAkhir" class="text-right">Rp 0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="action-bar">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" onclick="tambahBarisJurnal()">(+) Tambah Baris di Bawah</button>
+                <button class="btn-reset" onclick="resetBukuKas()">🗑️ Kosongkan / Reset Semua Data Kas Ini</button>
+            </div>
+            <span style="font-size: 12px; color: #bdc3c7; font-style: italic;">*Data otomatis tersimpan & terhitung secara instan</span>
+        </div>
+    </div>
+
+    <!-- SECTION 2: MASTER DATA COA -->
+    <div id="section-coa" class="section-content">
+        <h3 style="margin:0 0 15px 0; color: #f1c40f;">Master Data Chart of Accounts (COA)</h3>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div class="period-mini-wrapper">
+                <div class="period-mini">PERIODE: <span id="labelPeriodeCoa">-</span></div>
+                <div id="sessionUserBadgeCoa" class="session-badge">👤 User: <span>-</span></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" onclick="tambahCoaBaru('group')">+ Tambah Akun Induk</button>
+                <button class="btn-addRow" style="background: #2980b9;" onclick="tambahCoaBaru('detail')">+ Tambah Akun Detail</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;" class="text-center">NO AKUN</th>
+                        <th style="width: 420px;" class="text-center">NAMA AKUN</th>
+                        <th style="width: 70px;" class="text-center">POS</th>
+                        <th style="width: 80px;" class="text-center">NR/LR</th>
+                        <th style="width: 130px; white-space: nowrap;" class="text-center">SALDO AWAL<br>(DEBIT)</th>
+                        <th style="width: 130px; white-space: nowrap;" class="text-center">SALDO AWAL<br>(KREDIT)</th>
+                        <th style="width: 90px;" class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyCoa">
+                    <!-- Data COA -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4"><strong>TOTAL SALDO AWAL:</strong></td>
+                        <td id="footerTotalDebitCoa" class="text-right">Rp 0</td>
+                        <td id="footerTotalKreditCoa" class="text-right">Rp 0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="action-bar">
+            <span style="font-size: 12px; color: #bdc3c7; font-style: italic;">*Gunakan tombol 'Sisip' untuk menyisipkan akun Induk atau Detail di tengah tabel.</span>
+            <button class="btn-addRow" onclick="alert('Akun Sudah Diupdate'); switchTab('coa')">Tutup / Selesai</button>
+        </div>
+    </div>
+
+    <!-- SECTION 3: DATA MITRA (BERSAMA / TERPUSAT) -->
+    <div id="section-mitra" class="section-content">
+        <h3 style="margin:0 0 15px 0; color: #f1c40f;">Data Master Mitra Bersama (Terpusat)</h3>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div class="period-mini-wrapper">
+                <div class="period-mini">PERIODE: <span id="labelPeriodeMitra">-</span></div>
+                <div id="sessionUserBadgeMitra" class="session-badge">👤 User: <span>-</span></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" id="btnKelolaUnit" onclick="switchTab('unit')">⚙️ Kelola Unit Mitra</button>
+                <button class="btn-addRow" onclick="tambahBarisMitra()">(+) Tambah Mitra</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;" class="text-center" rowspan="2">NO</th>
+                        <th style="width: 250px;" class="text-center" rowspan="2">NAME ID</th>
+                        <th style="width: 180px;" class="text-center" rowspan="2">NAMA</th>
+                        <th style="width: 140px;" class="text-center" rowspan="2">UNIT</th>
+                        <th style="width: 200px;" class="text-center" rowspan="2">ALAMAT</th>
+                        <th style="width: 130px;" class="text-center" rowspan="2">TELP</th>
+                        <th style="width: 240px;" class="text-center" colspan="2">SALDO AWAL</th>
+                        <th style="width: 80px;" class="text-center" rowspan="2">AKSI</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 120px;" class="text-center">PIUTANG</th>
+                        <th style="width: 120px;" class="text-center">UTANG</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyMitra">
+                    <!-- Data Mitra -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6"><strong>TOTAL SALDO AWAL MITRA:</strong></td>
+                        <td id="footerTotalPiutangMitra" class="text-right">Rp 0</td>
+                        <td id="footerTotalUtangMitra" class="text-right">Rp 0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="action-bar">
+            <span style="font-size: 12px; color: #bdc3c7; font-style: italic;">*Data Mitra bersifat terpusat/bersama dan otomatis terlihat oleh seluruh unit & pusat.</span>
+            <button class="btn-addRow" onclick="alert('Data Mitra Sudah Diupdate'); switchTab('mitra')">Tutup / Selesai</button>
+        </div>
+    </div>
+
+    <!-- SECTION 4: INPUT UNIT MITRA -->
+    <div id="section-unit" class="section-content">
+        <h3 style="margin:0 0 15px 0; color: #f1c40f;">Master Data Unit Mitra</h3>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div class="period-mini">PERIODE: <span id="labelPeriodeUnit">-</span></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" onclick="switchTab('mitra')">⬅️ Kembali ke Data Mitra</button>
+                <button class="btn-addRow" onclick="tambahUnitBaru()">➕ Tambah Unit Baru</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table style="min-width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;" class="text-center">NO</th>
+                        <th class="text-center">NAMA UNIT</th>
+                        <th style="width: 100px;" class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyUnit">
+                    <!-- Data Unit -->
+                </tbody>
+            </table>
+        </div>
+        <div class="action-bar">
+            <span style="font-size: 12px; color: #bdc3c7; font-style: italic;">*Unit yang dihapus tidak akan muncul di pilihan dropdown Data Mitra.</span>
+            <button class="btn-addRow" onclick="alert('Unit Mitra Sudah Diupdate'); switchTab('unit')">Tutup / Selesai</button>
+        </div>
+    </div>
+
+    <!-- SECTION 5: JURNAL PENYESUAIAN -->
+    <div id="section-penyesuaian" class="section-content">
+        <h3 style="margin:0 0 15px 0; color: #f1c40f;">Jurnal Transaksi Penyesuaian</h3>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div class="period-mini-wrapper">
+                <div class="period-mini">PERIODE: <span id="labelPeriodePenyesuaian">-</span></div>
+                <div id="sessionUserBadgePenyesuaian" class="session-badge">👤 User: <span>-</span></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" onclick="tambahBarisPenyesuaian()">(+) Tambah Baris di Bawah</button>
+                <button class="btn-reset" onclick="resetPenyesuaian()">🗑️ Kosongkan Penyesuaian</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;" class="text-center">NO</th>
+                        <th style="width: 95px;" class="text-center">TGL</th>
+                        <th style="width: 80px;" class="text-center">BUKTI</th>
+                        <th style="width: 180px;" class="text-center">NAMA MITRA</th>
+                        <th style="width: 210px;" class="text-center">DESKRIPSI TRANSAKSI</th>
+                        <th style="width: 190px;" class="text-center">AKUN DEBET</th>
+                        <th style="width: 190px;" class="text-center">AKUN KREDIT</th>
+                        <th style="width: 130px;" class="text-center">JUMLAH</th>
+                        <th style="width: 80px;" class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyPenyesuaian">
+                    <!-- Data Penyesuaian -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="7"><strong>TOTAL KESELURUHAN:</strong></td>
+                        <td id="footerTotalJmlPenyesuaian" class="text-right">Rp 0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="action-bar">
+            <span style="font-size: 12px; color: #bdc3c7; font-style: italic;">*Data penyesuaian otomatis tersimpan & terhitung secara instan</span>
+            <button class="btn-addRow" onclick="switchTab('jurnal')">Tutup / Selesai</button>
+        </div>
+    </div>
+
+    <!-- SECTION 6: LAPORAN KONSOLIDASI (ADMIN PUSAT ONLY) -->
+    <div id="section-konsolidasi" class="section-content">
+        <div class="page-header-flex">
+            <div>
+                <h3 style="margin:0; color: #f1c40f;">📊 Laporan Rekapitulasi Konsolidasi Gabungan Unit</h3>
+                <p style="margin: 3px 0 0 0; font-size: 12px; color: #bdc3c7;">Rekapitulasi otomatis gabungan seluruh transaksi kas dari semua unit secara independen.</p>
+            </div>
+            <div class="period-mini-wrapper">
+                <div id="sessionUserBadgeKonsolidasi" class="session-badge">👤 User: <span>-</span></div>
+                <div class="period-mini">PERIODE: <span id="labelPeriodeKonsolidasi">-</span></div>
+            </div>
+        </div>
+
+        <div class="transaction-header">
+            <div class="bank-select-wrapper">
+                <label>FILTER UNIT:</label>
+                <select id="filterKonsolidasiUnit" class="bank-dropdown" onchange="renderKonsolidasi()">
+                    <option value="ALL">ALL (Semua Unit Gabungan)</option>
+                    <!-- Otomatis diisi unit -->
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-addRow" style="background: #2980b9;" onclick="window.print()">🖨️ Cetak / Print Laporan</button>
+                <button class="btn-addRow" onclick="renderKonsolidasi()">🔄 Refresh Data</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;" class="text-center">NO</th>
+                        <th style="width: 100px;" class="text-center">UNIT</th>
+                        <th style="width: 90px;" class="text-center">TGL</th>
+                        <th style="width: 70px;" class="text-center">BUKTI</th>
+                        <th style="width: 180px;" class="text-center">MITRA</th>
+                        <th style="width: 200px;" class="text-center">DESKRIPSI TRANSAKSI</th>
+                        <th style="width: 180px;" class="text-center">AKUN TRANSAKSI</th>
+                        <th style="width: 120px;" class="text-center">PENERIMAAN</th>
+                        <th style="width: 120px;" class="text-center">PENGELUARAN</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyKonsolidasi">
+                    <!-- Data Konsolidasi Gabungan -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="7"><strong>TOTAL GABUNGAN KESELURUHAN:</strong></td>
+                        <td id="footerTotalPenerimaanKonsolidasi" class="text-right">Rp 0</td>
+                        <td id="footerTotalPengeluaranKonsolidasi" class="text-right">Rp 0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let daftarCOA = JSON.parse(localStorage.getItem('master_coa_pro')) || [
+        { noAkun: "10000", namaAkun: "AKTIVA", pos: "", nrlr: "", debit: 0, kredit: 0, isGroup: true },
+        { noAkun: "11000", namaAkun: "AKTIVA LANCAR", pos: "", nrlr: "", debit: 0, kredit: 0, isGroup: true },
+        { noAkun: "11100", namaAkun: "KAS & BANK", pos: "", nrlr: "", debit: 0, kredit: 0, isGroup: true },
+        { noAkun: "11101", namaAkun: "Kas Operasional", pos: "D", nrlr: "NR", debit: 15500000, kredit: 0, isGroup: false },
+        { noAkun: "11102", namaAkun: "Bank - Pendidikan", pos: "D", nrlr: "NR", debit: 555000000, kredit: 0, isGroup: false },
+        { noAkun: "11103", namaAkun: "Bank - Dana BOS", pos: "D", nrlr: "NR", debit: 1000000, kredit: 0, isGroup: false },
+        { noAkun: "11200", namaAkun: "PIUTANG", pos: "", nrlr: "", debit: 0, kredit: 0, isGroup: true }
+    ];
+
+    let daftarUnit = JSON.parse(localStorage.getItem('master_unit_mitra')) || ["Pengurus", "Guru", "Pegawai", "Peserta Didik"];
+
+    let activeBankNo = localStorage.getItem('active_bank_no') || "11101";
+    const listBulanSingkat = { "Januari": "JAN", "Februari": "FEB", "Maret": "MAR", "April": "APR", "Mei": "MEI", "Juni": "JUN", "Juli": "JUL", "Agustus": "AGU", "September": "SEP", "Oktober": "OKT", "November": "NOV", "Desember": "DES" };
+    const listBulanUrut = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // --- HELPER STORAGE SEGREGASI HAK AKSES PER UNIT ---
+    function getStorageKeyForActiveBank() {
+        let role = localStorage.getItem('active_session_role');
+        let unit = localStorage.getItem('active_session_unit') || 'ALL';
+        return role === 'unit' ? `jurnal_bank_${activeBankNo}_unit_${unit}` : `jurnal_bank_${activeBankNo}_pusat`;
+    }
+
+    function getStorageKeyForPenyesuaian() {
+        let role = localStorage.getItem('active_session_role');
+        let unit = localStorage.getItem('active_session_unit') || 'ALL';
+        return role === 'unit' ? `jurnal_penyesuaian_data_unit_${unit}` : `jurnal_penyesuaian_data_pusat`;
+    }
+
+    function getStorageKeyForMitra() {
+        return 'master_mitra_yayasan_bersama';
+    }
+
+    function getDaftarNameIdMitra() {
+        let dataMitra = JSON.parse(localStorage.getItem(getStorageKeyForMitra())) || [];
+        return dataMitra.map(m => m.nameId).filter(id => id && id.trim() !== "");
+    }
+
+    // --- FUNGSI HELPER FORMAT RUPIAH / RIBUAN ---
+    function formatRibuan(angka) {
+        if (!angka && angka !== 0) return "";
+        let numberString = String(angka).replace(/[^,\d]/g, '');
+        let split = numberString.split(',');
+        let sisa = split[0].length % 3;
+        let rupiah = split[0].substr(0, sisa);
+        let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        return rupiah;
+    }
+
+    function parseRupiahKeAngka(rupiahString) {
+        if (!rupiahString) return 0;
+        let bersih = String(rupiahString).replace(/[^0-9]/g, '');
+        return Number(bersih) || 0;
+    }
+
+    function formatInputRupiah(el) {
+        let cursorPosition = el.selectionStart;
+        let originalLength = el.value.length;
+        
+        let angkaMurni = el.value.replace(/[^0-9]/g, '');
+        el.value = formatRibuan(angkaMurni);
+        
+        let newLength = el.value.length;
+        cursorPosition = cursorPosition + (newLength - originalLength);
+        el.setSelectionRange(cursorPosition, cursorPosition);
+    }
+
+    function populateDropdowns() {
+        const listBulan = listBulanUrut;
+        
+        ['p_tglawal', 'p_tgllap'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el && el.options.length === 0) {
+                for (let i = 1; i <= 31; i++) {
+                    let opt = document.createElement('option');
+                    opt.value = i < 10 ? '0' + i : i;
+                    opt.innerText = i < 10 ? '0' + i : i;
+                    el.appendChild(opt);
+                }
+            }
+        });
+
+        ['p_blnawal', 'p_blnlap'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el && el.options.length === 0) {
+                listBulan.forEach(b => {
+                    let opt = document.createElement('option');
+                    opt.value = b;
+                    opt.innerText = b;
+                    el.appendChild(opt);
+                });
+            }
+        });
+
+        ['p_thnawal', 'p_thnlap'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el && el.options.length === 0) {
+                for (let y = 2024; y <= 2032; y++) {
+                    let opt = document.createElement('option');
+                    opt.value = y;
+                    opt.innerText = y;
+                    el.appendChild(opt);
+                }
+            }
+        });
+    }
+
+    function formatRupiah(angka) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    }
+
+    function updatePeriodeLaporanBanner() {
+        let tglAwal = document.getElementById('p_tglawal') ? document.getElementById('p_tglawal').value : '01';
+        let blnAwal = document.getElementById('p_blnawal') ? document.getElementById('p_blnawal').value : 'Januari';
+        let thnAwal = document.getElementById('p_thnawal') ? document.getElementById('p_thnawal').value : '2026';
+
+        let idxBulanAwal = listBulanUrut.indexOf(blnAwal);
+        if (idxBulanAwal === -1) idxBulanAwal = 0;
+        let tahunAwalInt = parseInt(thnAwal) || 2026;
+
+        let idxBulanAkhir = (idxBulanAwal - 1 + 12) % 12;
+        let tahunAkhirInt = idxBulanAkhir < idxBulanAwal ? tahunAwalInt + 1 : tahunAwalInt;
+        let namaBulanAkhir = listBulanUrut[idxBulanAkhir];
+
+        let tanggalAkhirBulan = new Date(tahunAkhirInt, idxBulanAkhir + 1, 0).getDate();
+        let tglAkhirStr = String(tanggalAkhirBulan).padStart(2, '0');
+
+        let strMulai = `${tglAwal} ${listBulanSingkat[blnAwal] || blnAwal.toUpperCase()} ${tahunAwalInt}`;
+        let strSelesai = `${tglAkhirStr} ${listBulanSingkat[namaBulanAkhir] || namaBulanAkhir.toUpperCase()} ${tahunAkhirInt}`;
+        let hasilPeriode = `${strMulai} S.D. ${strSelesai}`;
+
+        ['labelPeriodeJurnal', 'labelPeriodeCoa', 'labelPeriodeMitra', 'labelPeriodeUnit', 'labelPeriodePenyesuaian', 'labelPeriodeKonsolidasi'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el) el.innerText = hasilPeriode;
+        });
+    }
+
+    function switchTab(tab, btnElement) {
+        let sectionLogin = document.getElementById('section-login');
+        if (sectionLogin) {
+            sectionLogin.style.display = 'none';
+            sectionLogin.classList.remove('active');
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(sec => {
+            sec.classList.remove('active');
+            sec.style.display = 'none';
+        });
+
+        if (btnElement) {
+            btnElement.classList.add('active');
+        } else {
+            let targetBtn = document.getElementById('menu' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        let targetSec = document.getElementById('section-' + tab);
+        if (targetSec) {
+            targetSec.classList.add('active');
+            targetSec.style.display = 'block';
+        }
+
+        if (tab === 'profile') {
+            loadProfileData();
+        } else if (tab === 'jurnal') {
+            initJurnalPage();
+        } else if (tab === 'coa') {
+            renderCoa();
+        } else if (tab === 'mitra') {
+            renderMitra();
+        } else if (tab === 'unit') {
+            renderUnit();
+        } else if (tab === 'penyesuaian') {
+            renderPenyesuaian();
+        } else if (tab === 'konsolidasi') {
+            renderKonsolidasi();
+        }
+    }
+
+    const profileFields = ['p_org', 'p_lembaga', 'p_npwp1', 'p_npwp2', 'p_npwp3', 'p_alamat1', 'p_alamat2', 'p_kota', 'p_prov', 'p_telp', 'p_kodepos', 'p_email', 'p_web', 'p_namaketua', 'p_jabatanketua', 'p_npwpketua1', 'p_npwpketua2', 'p_npwpketua3', 'p_namakepala', 'p_jabatankepala', 'p_namabendahara', 'p_jabatanbendahara', 'p_tglawal', 'p_blnawal', 'p_thnawal', 'p_tgllap', 'p_blnlap', 'p_thnlap', 'p_bidang', 'p_periodeshow'];
+
+    function saveProfileData() {
+        let profileData = {};
+        profileFields.forEach(id => {
+            let el = document.getElementById(id);
+            if (el) profileData[id] = el.value;
+        });
+        localStorage.setItem('master_profile_data', JSON.stringify(profileData));
+        updatePeriodeLaporanBanner();
+    }
+
+    function loadProfileData() {
+        populateDropdowns();
+        let saved = JSON.parse(localStorage.getItem('master_profile_data'));
+        if (saved) {
+            profileFields.forEach(id => {
+                let el = document.getElementById(id);
+                if (el && saved[id] !== undefined) {
+                    el.value = saved[id];
+                }
+            });
+        }
+        updatePeriodeLaporanBanner();
+    }
+
+    function exportDataCadangan() {
+        saveProfileData();
+        let allData = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            try {
+                allData[key] = JSON.parse(localStorage.getItem(key));
+            } catch (err) {
+                allData[key] = localStorage.getItem(key);
+            }
+        }
+
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 2));
+        let downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        let tanggalHariIni = new Date().toISOString().split('T')[0];
+        downloadAnchor.setAttribute("download", `backup_keuangan_${tanggalHariIni}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importDataCadangan(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let importedData = JSON.parse(e.target.result);
+                if (confirm('PERINGATAN: Mengimport data akan menimpa data yang sedang aktif di browser saat ini. Lanjutkan?')) {
+                    for (let key in importedData) {
+                        let val = typeof importedData[key] === 'object' ? JSON.stringify(importedData[key]) : importedData[key];
+                        localStorage.setItem(key, val);
+                    }
+                    alert('Data cadangan berhasil di-restore! Halaman akan dimuat ulang.');
+                    location.reload();
+                }
+            } catch (err) {
+                alert('Gagal membaca file! Pastikan file yang di-upload berformat .json cadangan aplikasi ini.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function renderBankDropdown() {
+        const selectEl = document.getElementById('bankDropdownSelect');
+        if (!selectEl) return;
+        selectEl.innerHTML = '';
+
+        let role = localStorage.getItem('active_session_role');
+        let activeUnit = localStorage.getItem('active_session_unit');
+
+        let bankAccounts = daftarCOA.filter(c => {
+            let isInduk = c.isGroup === true || c.isGroup === "true" || !c.pos || c.pos.trim() === "";
+            let no = String(c.noAkun || '').trim();
+            let isKasBank = !isInduk && no.startsWith('111');
+
+            if (!isKasBank) return false;
+
+            let namaAkunLower = c.namaAkun.toLowerCase();
+
+            // Jika yang login adalah User Unit, filter kas/bank yang mengandung nama unit tersebut
+            if (role === 'unit') {
+                return namaAkunLower.includes(activeUnit.toLowerCase());
+            }
+
+            // Jika yang login adalah Admin Pusat, HANYA tampilkan kas/bank pusat 
+            // (Saring keluar kas/bank yang secara spesifik milik unit-unit terdaftar)
+            if (role === 'admin' || !role) {
+                let isMilikUnitLain = daftarUnit.some(u => namaAkunLower.includes(u.toLowerCase()));
+                return !isMilikUnitLain;
+            }
+
+            return true;
+        });
+
+        if (!bankAccounts.some(b => b.noAkun === activeBankNo) && bankAccounts.length > 0) {
+            activeBankNo = bankAccounts[0].noAkun;
+        }
+
+        bankAccounts.forEach(acc => {
+            const opt = document.createElement('option');
+            opt.value = acc.noAkun;
+            opt.innerText = `${acc.noAkun} - ${acc.namaAkun}`;
+            if (acc.noAkun === activeBankNo) {
+                opt.selected = true;
+            }
+            selectEl.appendChild(opt);
+        });
+    }
+
+    function gantiAkunBank(noAkun) {
+        activeBankNo = noAkun;
+        localStorage.setItem('active_bank_no', activeBankNo);
+        initJurnalPage();
+    }
+
+    function initJurnalPage() {
+        renderBankDropdown();
+        const currentBank = daftarCOA.find(c => c.noAkun === activeBankNo);
+        if (currentBank) {
+            document.getElementById('lblNamaAkun').innerText = currentBank.namaAkun;
+            document.getElementById('lblKodeAkun').innerText = currentBank.noAkun;
+        } else {
+            document.getElementById('lblNamaAkun').innerText = "Pilih Akun";
+            document.getElementById('lblKodeAkun').innerText = "-";
+        }
+        renderJurnal();
+        updatePeriodeLaporanBanner();
+    }
+
+    function renderJurnal() {
+        const tbody = document.getElementById('tableBodyJurnal');
+        tbody.innerHTML = '';
+        
+        let storageKey = getStorageKeyForActiveBank();
+        let currentBank = daftarCOA.find(c => c.noAkun === activeBankNo);
+        let saldoAwalMaster = currentBank ? (Number(currentBank.debit) || 0) - (Number(currentBank.kredit) || 0) : 0;
+
+        let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey));
+        
+        if (!dataJurnalBank || dataJurnalBank.length === 0) {
+            dataJurnalBank = [
+                { tgl: new Date().toISOString().split('T')[0], bukti: "1", mitra: "", deskripsi: "Saldo Awal " + (currentBank ? currentBank.namaAkun : ''), akun: activeBankNo + " - " + (currentBank ? currentBank.namaAkun : ''), penerimaan: saldoAwalMaster > 0 ? saldoAwalMaster : 0, pengeluaran: 0 }
+            ];
+            localStorage.setItem(storageKey, JSON.stringify(dataJurnalBank));
+        }
+
+        let saldoBerjalan = 0;
+        let totalPenerimaanAll = 0;
+        let totalPengeluaranAll = 0;
+
+        let role = localStorage.getItem('active_session_role');
+        let activeUnit = localStorage.getItem('active_session_unit');
+
+        let detailCoa = daftarCOA.filter(c => {
+            if (c.isGroup || !c.noAkun) return false;
+            let no = String(c.noAkun).trim();
+            let namaAkunLower = c.namaAkun.toLowerCase();
+
+            if (role === 'unit') {
+                if (no.startsWith('111')) {
+                    return namaAkunLower.includes(activeUnit.toLowerCase());
+                }
+            } else if (role === 'admin' || !role) {
+                // Jika pusat, saring akun kas/bank (awalan 111) yang mencantumkan nama unit lain
+                if (no.startsWith('111')) {
+                    let isMilikUnitLain = daftarUnit.some(u => namaAkunLower.includes(u.toLowerCase()));
+                    return !isMilikUnitLain;
+                }
+            }
+            return true;
+        });
+        
+        let daftarMitraId = getDaftarNameIdMitra();
+
+        dataJurnalBank.forEach((item, index) => {
+            let penerimaan = Number(item.penerimaan) || 0;
+            let pengeluaran = Number(item.pengeluaran) || 0;
+            
+            totalPenerimaanAll += penerimaan;
+            totalPengeluaranAll += pengeluaran;
+
+            if (index === 0) {
+                saldoBerjalan = penerimaan - pengeluaran;
+            } else {
+                saldoBerjalan = saldoBerjalan + penerimaan - pengeluaran;
+            }
+
+            let optionsCoa = detailCoa.map(c => {
+                let labelAkun = `${c.noAkun} - ${c.namaAkun}`;
+                return `<option value="${labelAkun}" ${item.akun === labelAkun ? 'selected' : ''}>${labelAkun}</option>`;
+            }).join('');
+
+            let optionsMitra = daftarMitraId.map(mId => {
+                return `<option value="${mId}" ${item.mitra === mId ? 'selected' : ''}>${mId}</option>`;
+            }).join('');
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${index + 1}</td>
+                <td><input type="date" value="${item.tgl || ''}" oninput="updateJurnalData(${index}, 'tgl', this.value)"></td>
+                <td><input type="text" value="${item.bukti || ''}" oninput="updateJurnalData(${index}, 'bukti', this.value)"></td>
+                <td>
+                    <select onchange="updateJurnalData(${index}, 'mitra', this.value)">
+                        <option value="">-- Pilih Mitra (Name ID) --</option>
+                        ${optionsMitra}
+                    </select>
+                </td>
+                <td><input type="text" value="${item.deskripsi || ''}" oninput="updateJurnalData(${index}, 'deskripsi', this.value)"></td>
+                <td>
+                    <select onchange="updateJurnalData(${index}, 'akun', this.value)">
+                        <option value="">-- Pilih Akun Detail --</option>
+                        ${optionsCoa}
+                    </select>
+                </td>
+                <td><input type="text" class="text-right" value="${penerimaan > 0 ? formatRibuan(penerimaan) : ''}" placeholder="0" oninput="formatInputRupiah(this)" onblur="updateJurnalData(${index}, 'penerimaan', this.value)"></td>
+                <td><input type="text" class="text-right" value="${pengeluaran > 0 ? formatRibuan(pengeluaran) : ''}" placeholder="0" oninput="formatInputRupiah(this)" onblur="updateJurnalData(${index}, 'pengeluaran', this.value)"></td>
+                <td class="text-right"><b id="saldo-row-${index}">${formatRupiah(saldoBerjalan)}</b></td>
+                <td class="text-center" style="white-space: nowrap;">
+                    <button class="btn-insert" title="Sisip Baris Baru di Atas" onclick="sisipBarisJurnal(${index})">Sisip</button>
+                    <button class="btn-delete" title="Hapus Baris Ini" onclick="hapusBarisJurnal(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('headerSaldo').innerText = formatRupiah(saldoBerjalan);
+        document.getElementById('footerTotalPenerimaan').innerText = formatRupiah(totalPenerimaanAll);
+        document.getElementById('footerTotalPengeluaran').innerText = formatRupiah(totalPengeluaranAll);
+        document.getElementById('footerTotalSaldoAkhir').innerText = formatRupiah(saldoBerjalan);
+    }
+
+    function updateJurnalData(index, field, value) {
+        let storageKey = getStorageKeyForActiveBank();
+        let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey)) || [];
+        if (dataJurnalBank[index]) {
+            if (field === 'penerimaan' || field === 'pengeluaran') {
+                dataJurnalBank[index][field] = parseRupiahKeAngka(value);
+            } else {
+                dataJurnalBank[index][field] = value;
+            }
+            localStorage.setItem(storageKey, JSON.stringify(dataJurnalBank));
+            recalculateLiveSaldo();
+        }
+    }
+
+    function recalculateLiveSaldo() {
+        let storageKey = getStorageKeyForActiveBank();
+        let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let saldoBerjalan = 0;
+        let totalPenerimaanAll = 0;
+        let totalPengeluaranAll = 0;
+
+        dataJurnalBank.forEach((item, index) => {
+            let penerimaan = Number(item.penerimaan) || 0;
+            let pengeluaran = Number(item.pengeluaran) || 0;
+            
+            totalPenerimaanAll += penerimaan;
+            totalPengeluaranAll += pengeluaran;
+
+            if (index === 0) {
+                saldoBerjalan = penerimaan - pengeluaran;
+            } else {
+                saldoBerjalan = saldoBerjalan + penerimaan - pengeluaran;
+            }
+
+            let cellSaldo = document.getElementById(`saldo-row-${index}`);
+            if (cellSaldo) {
+                cellSaldo.innerText = formatRupiah(saldoBerjalan);
+            }
+        });
+
+        document.getElementById('headerSaldo').innerText = formatRupiah(saldoBerjalan);
+        document.getElementById('footerTotalPenerimaan').innerText = formatRupiah(totalPenerimaanAll);
+        document.getElementById('footerTotalPengeluaran').innerText = formatRupiah(totalPengeluaranAll);
+        document.getElementById('footerTotalSaldoAkhir').innerText = formatRupiah(saldoBerjalan);
+    }
+
+    function tambahBarisJurnal() {
+        let storageKey = getStorageKeyForActiveBank();
+        let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let detailCoa = daftarCOA.filter(c => !c.isGroup && c.noAkun);
+        let akunDefault = detailCoa.length > 0 ? `${detailCoa[0].noAkun} - ${detailCoa[0].namaAkun}` : '';
+        
+        dataJurnalBank.push({ tgl: new Date().toISOString().split('T')[0], bukti: "", mitra: "", deskripsi: "", akun: akunDefault, penerimaan: 0, pengeluaran: 0 });
+        localStorage.setItem(storageKey, JSON.stringify(dataJurnalBank));
+        renderJurnal();
+    }
+
+    function sisipBarisJurnal(index) {
+        let storageKey = getStorageKeyForActiveBank();
+        let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let detailCoa = daftarCOA.filter(c => !c.isGroup && c.noAkun);
+        let akunDefault = detailCoa.length > 0 ? `${detailCoa[0].noAkun} - ${detailCoa[0].namaAkun}` : '';
+
+        let barisBaru = { tgl: new Date().toISOString().split('T')[0], bukti: "", mitra: "", deskripsi: "", akun: akunDefault, penerimaan: 0, pengeluaran: 0 };
+        dataJurnalBank.splice(index, 0, barisBaru);
+        localStorage.setItem(storageKey, JSON.stringify(dataJurnalBank));
+        renderJurnal();
+    }
+
+    function hapusBarisJurnal(index) {
+        if (confirm('Yakin ingin menghapus baris transaksi ini?')) {
+            let storageKey = getStorageKeyForActiveBank();
+            let dataJurnalBank = JSON.parse(localStorage.getItem(storageKey)) || [];
+            dataJurnalBank.splice(index, 1);
+            localStorage.setItem(storageKey, JSON.stringify(dataJurnalBank));
+            renderJurnal();
+        }
+    }
+
+    function resetBukuKas() {
+        if (confirm('PERINGATAN: Semua data transaksi di buku kas/bank ini akan dihapus permanen untuk mulai dari awal. Yakin?')) {
+            let storageKey = getStorageKeyForActiveBank();
+            let currentBank = daftarCOA.find(c => c.noAkun === activeBankNo);
+            let saldoAwalMaster = currentBank ? (Number(currentBank.debit) || 0) - (Number(currentBank.kredit) || 0) : 0;
+            
+            let dataKosong = [
+                { tgl: new Date().toISOString().split('T')[0], bukti: "1", mitra: "", deskripsi: "Saldo Awal " + (currentBank ? currentBank.namaAkun : ''), akun: activeBankNo + " - " + (currentBank ? currentBank.namaAkun : ''), penerimaan: saldoAwalMaster > 0 ? saldoAwalMaster : 0, pengeluaran: 0 }
+            ];
+            localStorage.setItem(storageKey, JSON.stringify(dataKosong));
+            renderJurnal();
+            alert('Buku kas berhasil di-reset bersih ke awal!');
+        }
+    }
+
+    // --- MASTER COA ---
+    function renderCoa() {
+        const tbody = document.getElementById('tableBodyCoa');
+        tbody.innerHTML = '';
+        
+        let totalDebitCoa = 0;
+        let totalKreditCoa = 0;
+
+        daftarCOA.forEach((item, index) => {
+            let deb = Number(item.debit) || 0;
+            let kre = Number(item.kredit) || 0;
+            totalDebitCoa += deb;
+            totalKreditCoa += kre;
+
+            const tr = document.createElement('tr');
+            if (item.isGroup) {
+                tr.classList.add('row-group');
+            }
+            tr.innerHTML = `
+                <td><input type="text" value="${item.noAkun}" oninput="updateCoaData(${index}, 'noAkun', this.value)"></td>
+                <td><input type="text" value="${item.namaAkun}" oninput="updateCoaData(${index}, 'namaAkun', this.value)"></td>
+                <td class="text-center"><input type="text" class="text-center" value="${item.pos || ''}" placeholder="-" oninput="updateCoaData(${index}, 'pos', this.value)"></td>
+                <td class="text-center"><input type="text" class="text-center" value="${item.nrlr || ''}" placeholder="-" oninput="updateCoaData(${index}, 'nrlr', this.value)"></td>
+                <td><input type="text" class="text-right" value="${deb > 0 ? formatRibuan(deb) : ''}" placeholder="" oninput="formatInputRupiah(this)" onblur="updateCoaData(${index}, 'debit', this.value)"></td>
+                <td><input type="text" class="text-right" value="${kre > 0 ? formatRibuan(kre) : ''}" placeholder="" oninput="formatInputRupiah(this)" onblur="updateCoaData(${index}, 'kredit', this.value)"></td>
+                <td class="text-center" style="white-space: nowrap;">
+                    <button class="btn-insert" title="Sisip Akun Baru di Atas" onclick="sisipCoa(${index})">Sisip</button>
+                    <button class="btn-delete" title="Hapus Akun Ini" onclick="hapusCoa(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('footerTotalDebitCoa').innerText = formatRupiah(totalDebitCoa);
+        document.getElementById('footerTotalKreditCoa').innerText = formatRupiah(totalKreditCoa);
+
+        localStorage.setItem('master_coa_pro', JSON.stringify(daftarCOA));
+        updatePeriodeLaporanBanner();
+    }
+
+    function updateCoaData(index, field, value) {
+        if (field === 'debit' || field === 'kredit') {
+            daftarCOA[index][field] = parseRupiahKeAngka(value);
+        } else {
+            daftarCOA[index][field] = value;
+        }
+        localStorage.setItem('master_coa_pro', JSON.stringify(daftarCOA));
+        
+        let totalDebitCoa = 0;
+        let totalKreditCoa = 0;
+        daftarCOA.forEach(item => {
+            totalDebitCoa += Number(item.debit) || 0;
+            totalKreditCoa += Number(item.kredit) || 0;
+        });
+        document.getElementById('footerTotalDebitCoa').innerText = formatRupiah(totalDebitCoa);
+        document.getElementById('footerTotalKreditCoa').innerText = formatRupiah(totalKreditCoa);
+
+        renderBankDropdown();
+    }
+
+    function tambahCoaBaru(tipe) {
+        let isGroup = (tipe === 'group');
+        let namaDefault = isGroup ? "KATEGORI / AKUN INDUK BARU" : "Akun Transaksi Detail";
+        daftarCOA.push({ noAkun: "", namaAkun: namaDefault, pos: isGroup ? "" : "D", nrlr: isGroup ? "" : "NR", debit: 0, kredit: 0, isGroup: isGroup });
+        renderCoa();
+        renderBankDropdown();
+    }
+
+    function sisipCoa(index) {
+        let pilihan = prompt("Ketik jenis akun yang ingin disisipkan:\n1 = Akun Induk (Kategori)\n2 = Akun Detail", "2");
+        if (pilihan === "1" || pilihan === "2") {
+            let isGroup = (pilihan === "1");
+            let namaDefault = isGroup ? "KATEGORI / AKUN INDUK BARU" : "Akun Transaksi Detail";
+            let akunBaru = { 
+                noAkun: "", 
+                namaAkun: namaDefault, 
+                pos: isGroup ? "" : "D", 
+                nrlr: isGroup ? "" : "NR", 
+                debit: 0, 
+                kredit: 0, 
+                isGroup: isGroup 
+            };
+            daftarCOA.splice(index, 0, akunBaru);
+            renderCoa();
+            renderBankDropdown();
+        }
+    }
+
+    function hapusCoa(index) {
+        if (confirm('Yakin ingin menghapus akun COA ini?')) {
+            daftarCOA.splice(index, 1);
+            renderCoa();
+            renderBankDropdown();
+        }
+    }
+
+    // --- MANAJEMEN UNIT MITRA ---
+    function renderUnit() {
+        const tbody = document.getElementById('tableBodyUnit');
+        tbody.innerHTML = '';
+
+        daftarUnit.forEach((unitName, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${index + 1}</td>
+                <td><input type="text" value="${unitName}" oninput="updateUnitData(${index}, this.value)"></td>
+                <td class="text-center">
+                    <button class="btn-delete" title="Hapus Unit" onclick="hapusUnit(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        updatePeriodeLaporanBanner();
+    }
+
+    function updateUnitData(index, value) {
+        daftarUnit[index] = value.trim();
+        localStorage.setItem('master_unit_mitra', JSON.stringify(daftarUnit));
+    }
+
+    function tambahUnitBaru() {
+        let unitBaru = prompt("Masukkan nama unit mitra baru (Contoh: Donatur, Vendor, Siswa):");
+        if (unitBaru && unitBaru.trim() !== "") {
+            let cleanName = unitBaru.trim();
+            if (!daftarUnit.includes(cleanName)) {
+                daftarUnit.push(cleanName);
+                localStorage.setItem('master_unit_mitra', JSON.stringify(daftarUnit));
+                renderUnit();
+            } else {
+                alert('Unit tersebut sudah ada dalam daftar.');
+            }
+        }
+    }
+
+    function hapusUnit(index) {
+        if (confirm(`Yakin ingin menghapus unit "${daftarUnit[index]}"?`)) {
+            daftarUnit.splice(index, 1);
+            localStorage.setItem('master_unit_mitra', JSON.stringify(daftarUnit));
+            renderUnit();
+        }
+    }
+
+    // --- DATA MITRA BERSAMA (TERPUSAT) ---
+    function renderMitra() {
+        const tbody = document.getElementById('tableBodyMitra');
+        tbody.innerHTML = '';
+
+        let storageKey = getStorageKeyForMitra();
+        let dataMitra = JSON.parse(localStorage.getItem(storageKey));
+        if (!dataMitra || dataMitra.length === 0) {
+            dataMitra = [
+                { nameId: "Korenawan - 01 / Pengurus", nama: "Korenawan", unit: "Pengurus", alamat: "Tangtang Selatan", telp: "0813 1684 5354", piutang: 0, utang: 5000000 },
+                { nameId: "Dachtylifera - 02 / Pengurus", nama: "Dachtylifera", unit: "Pengurus", alamat: "Tangtang Selatan", telp: "0813 1684 5354", piutang: 0, utang: 0 },
+                { nameId: "Falsenta - 03 / Pengurus", nama: "Falsenta", unit: "Pengurus", alamat: "Tangtang Selatan", telp: "0813 1684 5354", piutang: 0, utang: 0 },
+                { nameId: "Kuat - 04 / Guru", nama: "Kuat", unit: "Guru", alamat: "Tangtang Selatan", telp: "0813 1684 5354", piutang: 0, utang: 0 }
+            ];
+            localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+        }
+
+        let totalPiutangAll = 0;
+        let totalUtangAll = 0;
+
+        let daftarPilihanUnit = ["Kantor", ...daftarUnit];
+
+        dataMitra.forEach((item, index) => {
+            let piu = Number(item.piutang) || 0;
+            let utg = Number(item.utang) || 0;
+            totalPiutangAll += piu;
+            totalUtangAll += utg;
+
+            let optionsUnit = daftarPilihanUnit.map(u => `<option value="${u}" ${item.unit === u ? 'selected' : ''}>${u}</option>`).join('');
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${index + 1}</td>
+                <td><input type="text" id="nameid-${index}" value="${item.nameId || ''}" readonly style="background: #eaeded; font-weight: bold; color: #7f8c8d;"></td>
+                <td><input type="text" id="nama-${index}" value="${item.nama || ''}" oninput="updateMitraOtomatis(${index})"></td>
+                <td>
+                    <select id="unit-${index}" onchange="updateMitraOtomatis(${index})">
+                        <option value="">-- Pilih Unit --</option>
+                        ${optionsUnit}
+                    </select>
+                </td>
+                <td><input type="text" value="${item.alamat || ''}" oninput="updateMitraField(${index}, 'alamat', this.value)"></td>
+                <td><input type="text" value="${item.telp || ''}" oninput="updateMitraField(${index}, 'telp', this.value)"></td>
+                <td><input type="text" class="text-right" value="${piu > 0 ? formatRibuan(piu) : ''}" placeholder="0" oninput="formatInputRupiah(this)" onblur="updateMitraField(${index}, 'piutang', this.value)"></td>
+                <td><input type="text" class="text-right" value="${utg > 0 ? formatRibuan(utg) : ''}" placeholder="0" oninput="formatInputRupiah(this)" onblur="updateMitraField(${index}, 'utang', this.value)"></td>
+                <td class="text-center" style="white-space: nowrap;">
+                    <button class="btn-insert" title="Sisip Baris" onclick="sisipMitra(${index})">Sisip</button>
+                    <button class="btn-delete" title="Hapus Baris" onclick="hapusMitra(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('footerTotalPiutangMitra').innerText = formatRupiah(totalPiutangAll);
+        document.getElementById('footerTotalUtangMitra').innerText = formatRupiah(totalUtangAll);
+        updatePeriodeLaporanBanner();
+    }
+
+    function updateMitraOtomatis(index) {
+        let storageKey = getStorageKeyForMitra();
+        let dataMitra = JSON.parse(localStorage.getItem(storageKey)) || [];
+        
+        let namaEl = document.getElementById(`nama-${index}`);
+        let unitEl = document.getElementById(`unit-${index}`);
+        let nameIdEl = document.getElementById(`nameid-${index}`);
+
+        let namaVal = namaEl ? namaEl.value : '';
+        let unitVal = unitEl ? unitEl.value : '';
+        let noUrutStr = String(index + 1).padStart(2, '0');
+
+        let generatedId = (namaVal || unitVal) ? `${namaVal} - ${noUrutStr} / ${unitVal}` : '';
+
+        if (nameIdEl) {
+            nameIdEl.value = generatedId;
+        }
+
+        if (!dataMitra[index]) {
+            dataMitra[index] = {};
+        }
+
+        dataMitra[index].nama = namaVal;
+        dataMitra[index].unit = unitVal;
+        dataMitra[index].nameId = generatedId;
+        localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+    }
+
+    function updateMitraField(index, field, value) {
+        let storageKey = getStorageKeyForMitra();
+        let dataMitra = JSON.parse(localStorage.getItem(storageKey)) || [];
+        if (dataMitra[index]) {
+            if (field === 'piutang' || field === 'utang') {
+                dataMitra[index][field] = parseRupiahKeAngka(value);
+            } else {
+                dataMitra[index][field] = value;
+            }
+            localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+
+            let totPiu = 0;
+            let totUtg = 0;
+            dataMitra.forEach(m => {
+                totPiu += Number(m.piutang) || 0;
+                totUtg += Number(m.utang) || 0;
+            });
+            document.getElementById('footerTotalPiutangMitra').innerText = formatRupiah(totPiu);
+            document.getElementById('footerTotalUtangMitra').innerText = formatRupiah(totUtg);
+        }
+    }
+
+    function tambahBarisMitra() {
+        let storageKey = getStorageKeyForMitra();
+        let dataMitra = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let newIndex = dataMitra.length;
+        let noUrutStr = String(newIndex + 1).padStart(2, '0');
+        let defaultUnit = daftarUnit.length > 0 ? daftarUnit[0] : 'Umum';
+
+        dataMitra.push({
+            nameId: `Mitra Baru - ${noUrutStr} / ${defaultUnit}`,
+            nama: "Mitra Baru",
+            unit: defaultUnit,
+            alamat: "",
+            telp: "",
+            piutang: 0,
+            utang: 0
+        });
+        localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+        renderMitra();
+    }
+
+    function sisipMitra(index) {
+        let storageKey = getStorageKeyForMitra();
+        let dataMitra = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let defaultUnit = daftarUnit.length > 0 ? daftarUnit[0] : 'Umum';
+        dataMitra.splice(index, 0, {
+            nameId: `Disisip - 00 / ${defaultUnit}`,
+            nama: "Disisip",
+            unit: defaultUnit,
+            alamat: "",
+            telp: "",
+            piutang: 0,
+            utang: 0
+        });
+        localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+        renderMitra();
+    }
+
+    function hapusMitra(index) {
+        if (confirm('Yakin ingin menghapus data mitra ini?')) {
+            let storageKey = getStorageKeyForMitra();
+            let dataMitra = JSON.parse(localStorage.getItem(storageKey)) || [];
+            dataMitra.splice(index, 1);
+            localStorage.setItem(storageKey, JSON.stringify(dataMitra));
+            renderMitra();
+        }
+    }
+
+    // --- JURNAL PENYESUAIAN ---
+    function renderPenyesuaian() {
+        const tbody = document.getElementById('tableBodyPenyesuaian');
+        tbody.innerHTML = '';
+
+        let storageKey = getStorageKeyForPenyesuaian();
+        let dataPenyesuaian = JSON.parse(localStorage.getItem(storageKey));
+        if (!dataPenyesuaian || dataPenyesuaian.length === 0) {
+            dataPenyesuaian = [
+                { tgl: new Date().toISOString().split('T')[0], bukti: "12-X", mitra: "", deskripsi: "Penerimaan Bantuan LCD PBL", akunDebet: "Peralatan Wakaf", akunKredit: "Pendapatan Taksiran Wakaf Peralatan", jumlah: 40000000 }
+            ];
+            localStorage.setItem(storageKey, JSON.stringify(dataPenyesuaian));
+        }
+
+        let totalJumlahPenyesuaian = 0;
+
+        let role = localStorage.getItem('active_session_role');
+        let activeUnit = localStorage.getItem('active_session_unit');
+
+        let detailCoa = daftarCOA.filter(c => {
+            if (c.isGroup || !c.noAkun) return false;
+            let no = String(c.noAkun).trim();
+            let namaAkunLower = c.namaAkun.toLowerCase();
+
+            if (role === 'unit') {
+                if (no.startsWith('111')) {
+                    return namaAkunLower.includes(activeUnit.toLowerCase());
+                }
+            } else if (role === 'admin' || !role) {
+                // Jika pusat, saring akun kas/bank (awalan 111) yang mencantumkan nama unit lain
+                if (no.startsWith('111')) {
+                    let isMilikUnitLain = daftarUnit.some(u => namaAkunLower.includes(u.toLowerCase()));
+                    return !isMilikUnitLain;
+                }
+            }
+            return true;
+        });
+        
+        let daftarMitraId = getDaftarNameIdMitra();
+
+        dataPenyesuaian.forEach((item, index) => {
+            let jml = Number(item.jumlah) || 0;
+            totalJumlahPenyesuaian += jml;
+
+            let optionsDebet = detailCoa.map(c => {
+                let labelAkun = `${c.noAkun} - ${c.namaAkun}`;
+                return `<option value="${labelAkun}" ${item.akunDebet === labelAkun || item.akunDebet === c.namaAkun ? 'selected' : ''}>${labelAkun}</option>`;
+            }).join('');
+
+            let optionsKredit = detailCoa.map(c => {
+                let labelAkun = `${c.noAkun} - ${c.namaAkun}`;
+                return `<option value="${labelAkun}" ${item.akunKredit === labelAkun || item.akunKredit === c.namaAkun ? 'selected' : ''}>${labelAkun}</option>`;
+            }).join('');
+
+            let optionsMitra = daftarMitraId.map(mId => {
+                return `<option value="${mId}" ${item.mitra === mId ? 'selected' : ''}>${mId}</option>`;
+            }).join('');
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${index + 1}</td>
+                <td><input type="date" value="${item.tgl || ''}" oninput="updatePenyesuaianData(${index}, 'tgl', this.value)"></td>
+                <td><input type="text" value="${item.bukti || ''}" oninput="updatePenyesuaianData(${index}, 'bukti', this.value)"></td>
+                <td>
+                    <select onchange="updatePenyesuaianData(${index}, 'mitra', this.value)">
+                        <option value="">-- Pilih Mitra --</option>
+                        ${optionsMitra}
+                    </select>
+                </td>
+                <td><input type="text" value="${item.deskripsi || ''}" oninput="updatePenyesuaianData(${index}, 'deskripsi', this.value)"></td>
+                <td>
+                    <select onchange="updatePenyesuaianData(${index}, 'akunDebet', this.value)">
+                        <option value="">-- Pilih Akun Debet --</option>
+                        ${optionsDebet}
+                    </select>
+                </td>
+                <td>
+                    <select onchange="updatePenyesuaianData(${index}, 'akunKredit', this.value)">
+                        <option value="">-- Pilih Akun Kredit --</option>
+                        ${optionsKredit}
+                    </select>
+                </td>
+                <td><input type="text" class="text-right" value="${jml > 0 ? formatRibuan(jml) : ''}" placeholder="0" oninput="formatInputRupiah(this)" onblur="updatePenyesuaianData(${index}, 'jumlah', this.value)"></td>
+                <td class="text-center" style="white-space: nowrap;">
+                    <button class="btn-insert" title="Sisip Baris Baru di Atas" onclick="sisipPenyesuaian(${index})">Sisip</button>
+                    <button class="btn-delete" title="Hapus Baris Ini" onclick="hapusPenyesuaian(${index})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('footerTotalJmlPenyesuaian').innerText = formatRupiah(totalJumlahPenyesuaian);
+        updatePeriodeLaporanBanner();
+    }
+
+    function updatePenyesuaianData(index, field, value) {
+        let storageKey = getStorageKeyForPenyesuaian();
+        let dataPenyesuaian = JSON.parse(localStorage.getItem(storageKey)) || [];
+        if (dataPenyesuaian[index]) {
+            if (field === 'jumlah') {
+                dataPenyesuaian[index][field] = parseRupiahKeAngka(value);
+            } else {
+                dataPenyesuaian[index][field] = value;
+            }
+            localStorage.setItem(storageKey, JSON.stringify(dataPenyesuaian));
+            
+            let totJml = 0;
+            dataPenyesuaian.forEach(item => {
+                totJml += Number(item.jumlah) || 0;
+            });
+            document.getElementById('footerTotalJmlPenyesuaian').innerText = formatRupiah(totJml);
+        }
+    }
+
+    function tambahBarisPenyesuaian() {
+        let storageKey = getStorageKeyForPenyesuaian();
+        let dataPenyesuaian = JSON.parse(localStorage.getItem(storageKey)) || [];
+        dataPenyesuaian.push({ tgl: new Date().toISOString().split('T')[0], bukti: "", mitra: "", deskripsi: "", akunDebet: "", akunKredit: "", jumlah: 0 });
+        localStorage.setItem(storageKey, JSON.stringify(dataPenyesuaian));
+        renderPenyesuaian();
+    }
+
+    function sisipPenyesuaian(index) {
+        let storageKey = getStorageKeyForPenyesuaian();
+        let dataPenyesuaian = JSON.parse(localStorage.getItem(storageKey)) || [];
+        dataPenyesuaian.splice(index, 0, { tgl: new Date().toISOString().split('T')[0], bukti: "", mitra: "", deskripsi: "", akunDebet: "", akunKredit: "", jumlah: 0 });
+        localStorage.setItem(storageKey, JSON.stringify(dataPenyesuaian));
+        renderPenyesuaian();
+    }
+
+    function hapusPenyesuaian(index) {
+        if (confirm('Yakin ingin menghapus baris penyesuaian ini?')) {
+            let storageKey = getStorageKeyForPenyesuaian();
+            let dataPenyesuaian = JSON.parse(localStorage.getItem(storageKey)) || [];
+            dataPenyesuaian.splice(index, 1);
+            localStorage.setItem(storageKey, JSON.stringify(dataPenyesuaian));
+            renderPenyesuaian();
+        }
+    }
+
+    function resetPenyesuaian() {
+        if (confirm('PERINGATAN: Semua data jurnal penyesuaian akan dikosongkan. Yakin?')) {
+            let storageKey = getStorageKeyForPenyesuaian();
+            localStorage.removeItem(storageKey);
+            renderPenyesuaian();
+            alert('Jurnal penyesuaian berhasil di-reset!');
+        }
+    }
+
+    // --- LOGIKA REKAPITULASI KONSOLIDASI GABUNGAN (ADMIN PUSAT) ---
+    function renderKonsolidasi() {
+        const tbody = document.getElementById('tableBodyKonsolidasi');
+        const selectFilter = document.getElementById('filterKonsolidasiUnit');
+        if (!tbody || !selectFilter) return;
+        tbody.innerHTML = '';
+
+        let currentSelectedValue = selectFilter.value || 'ALL';
+
+        selectFilter.innerHTML = '<option value="ALL">ALL (Semua Unit Gabungan)</option>';
+        daftarUnit.forEach(u => {
+            let opt = document.createElement('option');
+            opt.value = u;
+            opt.innerText = `Unit: ${u}`;
+            selectFilter.appendChild(opt);
+        });
+        let optPusat = document.createElement('option');
+        optPusat.value = 'pusat';
+        optPusat.innerText = 'Unit: Admin Pusat / PUSAT';
+        selectFilter.appendChild(optPusat);
+
+        selectFilter.value = currentSelectedValue;
+        let selectedFilter = selectFilter.value;
+        let gabunganTransaksi = [];
+        let processedKeys = new Set();
+
+        let validKasBankCodes = daftarCOA
+            .filter(c => !c.isGroup && String(c.noAkun || '').trim().startsWith('111'))
+            .map(c => String(c.noAkun).trim());
+
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.startsWith('jurnal_bank_')) {
+                let isPusatKey = key.endsWith('_pusat');
+                let isUnitKey = key.includes('_unit_');
+                let unitNameFromKey = isUnitKey ? key.split('_unit_')[1] : '';
+
+                let shouldInclude = false;
+
+                if (selectedFilter === 'ALL') {
+                    if (isPusatKey || (isUnitKey && daftarUnit.some(u => u.toLowerCase() === unitNameFromKey.toLowerCase()))) {
+                        shouldInclude = true;
+                    }
+                } else if (selectedFilter === 'pusat') {
+                    if (isPusatKey) {
+                        shouldInclude = true;
+                    }
+                } else {
+                    if (isUnitKey && unitNameFromKey.toLowerCase() === selectedFilter.toLowerCase()) {
+                        shouldInclude = true;
+                    }
+                }
+
+                if (shouldInclude && !processedKeys.has(key)) {
+                    processedKeys.add(key);
+                    let items = JSON.parse(localStorage.getItem(key)) || [];
+                    let labelSumber = isPusatKey ? 'Pusat' : unitNameFromKey;
+
+                    items.forEach(tr => {
+                        let teksAkun = String(tr.akun || '').trim();
+                        let kodeAkunTransaksi = teksAkun.split(' ')[0];
+                        let isValidAkun = validKasBankCodes.includes(kodeAkunTransaksi);
+
+                        if (isValidAkun) {
+                            gabunganTransaksi.push({
+                                ...tr,
+                                namaUnitSource: labelSumber
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        gabunganTransaksi.sort((a, b) => new Date(a.tgl || 0) - new Date(b.tgl || 0));
+
+        let totPenerimaan = 0;
+        let totPengeluaran = 0;
+
+        if (gabunganTransaksi.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="padding: 15px; color: #7f8c8d;">Belum ada data transaksi kas/bank yang valid untuk filter unit ini.</td></tr>`;
+        } else {
+            gabunganTransaksi.forEach((item, index) => {
+                let pen = Number(item.penerimaan) || 0;
+                let peng = Number(item.pengeluaran) || 0;
+                totPenerimaan += pen;
+                totPengeluaran += peng;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center">${index + 1}</td>
+                    <td class="text-center"><span class="badge-unit">${item.namaUnitSource.toUpperCase()}</span></td>
+                    <td class="text-center">${item.tgl || '-'}</td>
+                    <td class="text-center">${item.bukti || '-'}</td>
+                    <td>${item.mitra || '-'}</td>
+                    <td>${item.deskripsi || '-'}</td>
+                    <td>${item.akun || '-'}</td>
+                    <td class="text-right">${pen > 0 ? formatRupiah(pen) : '-'}</td>
+                    <td class="text-right">${peng > 0 ? formatRupiah(peng) : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('footerTotalPenerimaanKonsolidasi').innerText = formatRupiah(totPenerimaan);
+        document.getElementById('footerTotalPengeluaranKonsolidasi').innerText = formatRupiah(totPengeluaran);
+        updatePeriodeLaporanBanner();
+    }
+
+    // --- ALUR LOGIN & GATEKEEPER ---
+    function toggleUnitDropdown(val) {
+        let wrapper = document.getElementById('wrapper_unit_login');
+        let selectUnit = document.getElementById('login_unit_target');
+        if (val === 'unit') {
+            wrapper.style.display = 'block';
+            selectUnit.innerHTML = daftarUnit.map(u => `<option value="${u}">${u}</option>`).join('');
+        } else {
+            wrapper.style.display = 'none';
+        }
+    }
+
+    function prosesLogin() {
+        let role = document.getElementById('login_role').value;
+        let unitTarget = document.getElementById('login_unit_target').value;
+        let pass = document.getElementById('login_password').value;
+
+        if (role === 'admin' && pass !== 'admin123' && pass !== '') {
+            alert('Password Admin salah!');
+            return;
+        }
+
+        localStorage.setItem('active_session_role', role);
+        localStorage.setItem('active_session_unit', role === 'unit' ? unitTarget : 'ALL');
+
+        cekSesiLogin();
+    }
+
+    function prosesLogout() {
+        localStorage.removeItem('active_session_role');
+        localStorage.removeItem('active_session_unit');
+        location.reload();
+    }
+
+    function cekSesiLogin() {
+        let role = localStorage.getItem('active_session_role');
+        let unit = localStorage.getItem('active_session_unit');
+        let tabNav = document.getElementById('mainTabNav');
+        let sectionLogin = document.getElementById('section-login');
+
+        ['Profile', 'Jurnal', 'Coa', 'Mitra', 'Penyesuaian', 'Konsolidasi'].forEach(page => {
+            let badgeEl = document.getElementById('sessionUserBadge' + page);
+            if (badgeEl) {
+                if (role === 'admin') {
+                    badgeEl.innerHTML = `👤 User: <span>Admin Pusat</span>`;
+                } else {
+                    badgeEl.innerHTML = `👤 User: <span>User Unit (${unit})</span>`;
+                }
+            }
+        });
+
+        let menuProfile = document.getElementById('menuProfile');
+        let menuCoa = document.getElementById('menuCoa');
+        let menuMitra = document.getElementById('menuMitra');
+        let menuJurnal = document.getElementById('menuJurnal');
+        let menuPenyesuaian = document.getElementById('menuPenyesuaian');
+        let menuKonsolidasi = document.getElementById('menuKonsolidasi');
+        let btnKelolaUnit = document.getElementById('btnKelolaUnit');
+
+        if (role) {
+            if (sectionLogin) {
+                sectionLogin.style.display = 'none';
+                sectionLogin.classList.remove('active');
+            }
+            if (tabNav) tabNav.style.display = 'flex';
+
+            if (role === 'unit') {
+                if (menuProfile) menuProfile.style.display = 'none';
+                if (menuCoa) menuCoa.style.display = 'none';
+                if (menuKonsolidasi) menuKonsolidasi.style.display = 'none';
+                if (menuMitra) menuMitra.style.display = 'inline-block';
+                if (menuJurnal) menuJurnal.style.display = 'inline-block';
+                if (menuPenyesuaian) menuPenyesuaian.style.display = 'inline-block';
+                if (btnKelolaUnit) btnKelolaUnit.style.display = 'none';
+
+                switchTab('jurnal');
+            } else {
+                if (menuProfile) menuProfile.style.display = 'inline-block';
+                if (menuCoa) menuCoa.style.display = 'inline-block';
+                if (menuMitra) menuMitra.style.display = 'inline-block';
+                if (menuJurnal) menuJurnal.style.display = 'inline-block';
+                if (menuPenyesuaian) menuPenyesuaian.style.display = 'inline-block';
+                if (menuKonsolidasi) menuKonsolidasi.style.display = 'inline-block';
+                if (btnKelolaUnit) btnKelolaUnit.style.display = 'inline-block';
+
+                switchTab('profile');
+            }
+        } else {
+            // PAKSA MASUK KE HALAMAN LOGIN JIKA BELUM LOGIN
+            if (sectionLogin) {
+                sectionLogin.style.display = 'flex';
+                sectionLogin.classList.add('active');
+            }
+            if (tabNav) tabNav.style.display = 'none';
+            
+            document.querySelectorAll('.section-content').forEach(sec => {
+                if (sec.id !== 'section-login') {
+                    sec.classList.remove('active');
+                    sec.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    // Inisialisasi awal saat halaman pertama dimuat
+    populateDropdowns();
+    toggleUnitDropdown('admin');
+    cekSesiLogin();
+</script>
+
+</body>
+</html>
