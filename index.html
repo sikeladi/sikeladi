@@ -240,6 +240,8 @@
                     📤 Upload / Restore Data
                     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importDataCadangan(event)">
                 </label>
+                <button class="btn-addRow" style="background: #8e44ad;" onclick="loadFromCloudManually()">☁️ Tarik Data dari Cloud</button>
+                <button class="btn-addRow" style="background: #27ae60;" onclick="syncToCloud()">🚀 Simpan ke Cloud</button>
             </div>
         </div>
 
@@ -2034,6 +2036,11 @@ localStorage.setItem = function(key, value) {
 populateDropdowns();
 toggleUnitDropdown('admin');
 cekSesiLogin();
+function loadFromCloudManually() {
+    if (confirm("Tarik data dari Google Sheets akan memperbarui data di browser. Lanjutkan?")) {
+        loadFromCloud();
+    }
+}    
 </script>
 </body>
 </html>
