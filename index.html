@@ -710,7 +710,9 @@
 </div>
 
 <script>
-    let daftarCOA = JSON.parse(localStorage.getItem('master_coa_pro')) || [
+   // --- AMANKAN MASTER COA & UNIT AGAR TIDAK HILANG/RESET ---
+    let savedCoa = localStorage.getItem('master_coa_pro');
+    let daftarCOA = (savedCoa && savedCoa !== "[]" && savedCoa !== "null") ? JSON.parse(savedCoa) : [
         { noAkun: "10000", namaAkun: "AKTIVA", pos: "", nrlr: "", unit: "-", debit: 0, kredit: 0, isGroup: true },
         { noAkun: "11000", namaAkun: "AKTIVA LANCAR", pos: "", nrlr: "", unit: "-", debit: 0, kredit: 0, isGroup: true },
         { noAkun: "11100", namaAkun: "KAS & BANK", pos: "", nrlr: "", unit: "-", debit: 0, kredit: 0, isGroup: true },
@@ -720,7 +722,8 @@
         { noAkun: "11200", namaAkun: "PIUTANG", pos: "", nrlr: "", unit: "-", debit: 0, kredit: 0, isGroup: true }
     ];
 
-    let daftarUnit = JSON.parse(localStorage.getItem('master_unit_mitra')) || ["Pengurus", "Guru", "Pegawai", "Peserta Didik"];
+    let savedUnit = localStorage.getItem('master_unit_mitra');
+    let daftarUnit = (savedUnit && savedUnit !== "[]" && savedUnit !== "null") ? JSON.parse(savedUnit) : ["Pengurus", "Guru", "Pegawai", "Peserta Didik"];
 
     let activeBankNo = localStorage.getItem('active_bank_no') || "11101";
     const listBulanSingkat = { "Januari": "JAN", "Februari": "FEB", "Maret": "MAR", "April": "APR", "Mei": "MEI", "Juni": "JUN", "Juli": "JUL", "Agustus": "AGU", "September": "SEP", "Oktober": "OKT", "November": "NOV", "Desember": "DES" };
@@ -946,27 +949,28 @@
     }
 
     function importDataCadangan(event) {
-        let file = event.target.files[0];
-        if (!file) return;
+    let file = event.target.files[0];
+    if (!file) return;
 
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let importedData = JSON.parse(e.target.result);
-                if (confirm('PERINGATAN: Mengimport data akan menimpa data yang sedang aktif di browser saat ini. Lanjutkan?')) {
-                    for (let key in importedData) {
-                        let val = typeof importedData[key] === 'object' ? JSON.stringify(importedData[key]) : importedData[key];
-                        localStorage.setItem(key, val);
-                    }
-                    alert('Data cadangan berhasil di-restore! Halaman akan dimuat ulang.');
-                    location.reload();
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let importedData = JSON.parse(e.target.result);
+            if (confirm('PERINGATAN: Mengimport file backup akan memuat seluruh data COA, Mitra, dan Transaksi Anda ke browser. Lanjutkan?')) {
+                for (let key in importedData) {
+                    let val = importedData[key];
+                    let valStr = typeof val === 'object' ? JSON.stringify(val) : val;
+                    localStorage.setItem(key, valStr);
                 }
-            } catch (err) {
-                alert('Gagal membaca file! Pastikan file yang di-upload berformat .json cadangan aplikasi ini.');
+                alert('Data cadangan berhasil di-restore dengan aman! Halaman akan dimuat ulang.');
+                location.reload();
             }
-        };
-        reader.readAsText(file);
-    }
+        } catch (err) {
+            alert('Gagal membaca file! Pastikan file berformat .json cadangan aplikasi Sikeladi.');
+        }
+    };
+    reader.readAsText(file);
+}
 
     function renderBankDropdown() {
         const selectEl = document.getElementById('bankDropdownSelect');
@@ -1888,8 +1892,7 @@
     function prosesLogout() {
     localStorage.removeItem('active_session_role');
     localStorage.removeItem('active_session_unit');
-    // Hapus juga data cloud sementara dari memori lokal agar tidak melompat kembali
-    localStorage.clear();
+    // Jangan hapus master COA dan Profile, cukup matikan sesi aktif
     location.reload();
     }
 
