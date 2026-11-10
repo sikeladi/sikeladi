@@ -1969,10 +1969,8 @@
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
-// 1. Fungsi Simpan Manual ke Cloud (Aman & Terkendali)
+// 1. Fungsi Simpan ke Cloud (Murni eksekusi tanpa popup confirm)
 function syncToCloud() {
-    if (!confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) return;
-    
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
         let key = localStorage.key(i);
@@ -1994,14 +1992,21 @@ function syncToCloud() {
             payload: allData
         })
     }).then(() => {
-        alert("🚀 Data berhasil dikirim dan disinkronkan ke Google Sheets!");
+        console.log("Data tersimpan ke cloud.");
     }).catch(err => {
         console.error("Gagal sync:", err);
-        alert("Gagal mengirim data ke cloud. Periksa koneksi internet.");
     });
 }
 
-// 2. Fungsi Load Data dari Cloud (Manual via Tombol)
+// 2. Fungsi Khusus Tombol "🚀 Simpan ke Cloud" (Pakai Confirm & Alert)
+function syncToCloudManually() {
+    if (confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) {
+        syncToCloud();
+        alert("🚀 Data berhasil dikirim dan disinkronkan ke Google Sheets!");
+    }
+}
+
+// 3. Fungsi Load Data dari Cloud
 function loadFromCloud() {
     fetch(GOOGLE_SHEETS_URL + "?action=loadAll")
         .then(res => res.text())
@@ -2032,24 +2037,19 @@ function loadFromCloud() {
         });
 }
 
+// 4. Fungsi Khusus Tombol "☁️ Tarik Data dari Cloud"
 function loadFromCloudManually() {
     if (confirm("Tarik data dari Google Sheets akan memperbarui data di browser. Lanjutkan?")) {
         loadFromCloud();
     }
 }
 
-// --- INISIALISASI AWAL (AMAN DARI TIMPA DATA KOSONG) ---
-// loadFromCloud dikomentari agar data COA ribuan di browser Anda 100% AMAN
-// loadFromCloud(); 
+// --- INISIALISASI AWAL ---
+// loadFromCloud(); // Sengaja dimatikan agar COA di browser 100% aman dari data kosong cloud
 
 populateDropdowns();
 toggleUnitDropdown('admin');
 cekSesiLogin();
-function loadFromCloudManually() {
-    if (confirm("Tarik data dari Google Sheets akan memperbarui data di browser. Lanjutkan?")) {
-        loadFromCloud();
-    }
-} 
 </script>
 </body>
 </html>
