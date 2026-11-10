@@ -240,8 +240,8 @@
                     📤 Upload / Restore Data
                     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importDataCadangan(event)">
                 </label>
-                <button class="btn-addRow" style="background: #8e44ad;" onclick="loadFromCloudManually()">☁️ Tarik Data dari Cloud</button>
-                <button class="btn-addRow" style="background: #27ae60;" onclick="syncToCloud()">🚀 Simpan ke Cloud</button>
+                <button type="button" class="btn-addRow" style="background: #8e44ad; cursor: pointer; position: relative; z-index: 999;" onclick="loadFromCloudManually()">☁️ Tarik Data dari Cloud</button>
+                <button type="button" class="btn-addRow" style="background: #27ae60; cursor: pointer; position: relative; z-index: 999;" onclick="syncToCloudManually()">🚀 Simpan ke Cloud</button>
             </div>
         </div>
 
@@ -1969,7 +1969,6 @@
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
-// 1. Fungsi Simpan ke Cloud (Murni eksekusi tanpa popup confirm)
 function syncToCloud() {
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -1981,8 +1980,6 @@ function syncToCloud() {
         }
     }
 
-    console.log("Mengirim data ke Google Sheets...");
-
     fetch(GOOGLE_SHEETS_URL, {
         method: "POST",
         mode: "no-cors",
@@ -1992,13 +1989,12 @@ function syncToCloud() {
             payload: allData
         })
     }).then(() => {
-        console.log("Data tersimpan ke cloud.");
+        console.log("Sync background sukses.");
     }).catch(err => {
         console.error("Gagal sync:", err);
     });
 }
 
-// 2. Fungsi Khusus Tombol "🚀 Simpan ke Cloud" (Pakai Confirm & Alert)
 function syncToCloudManually() {
     if (confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) {
         syncToCloud();
@@ -2006,7 +2002,6 @@ function syncToCloudManually() {
     }
 }
 
-// 3. Fungsi Load Data dari Cloud
 function loadFromCloud() {
     fetch(GOOGLE_SHEETS_URL + "?action=loadAll")
         .then(res => res.text())
@@ -2028,25 +2023,21 @@ function loadFromCloud() {
                     }
                 }
             } catch(e) {
-                alert("Belum ada data di cloud atau format data belum siap.");
+                console.log("Format data cloud belum siap.");
             }
         })
         .catch(err => {
             console.log("Gagal memuat dari cloud:", err);
-            alert("Gagal terhubung ke Google Sheets.");
         });
 }
 
-// 4. Fungsi Khusus Tombol "☁️ Tarik Data dari Cloud"
 function loadFromCloudManually() {
     if (confirm("Tarik data dari Google Sheets akan memperbarui data di browser. Lanjutkan?")) {
         loadFromCloud();
     }
 }
 
-// --- INISIALISASI AWAL ---
-// loadFromCloud(); // Sengaja dimatikan agar COA di browser 100% aman dari data kosong cloud
-
+// Inisialisasi awal
 populateDropdowns();
 toggleUnitDropdown('admin');
 cekSesiLogin();
