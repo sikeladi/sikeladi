@@ -1978,7 +1978,6 @@
             }
         }
 
-        // Menggunakan mode no-cors dengan mengirim data sebagai string biasa di dalam body
         fetch(GOOGLE_SHEETS_URL, {
             method: "POST",
             mode: "no-cors",
@@ -1989,7 +1988,6 @@
     }
 
     function loadFromCloud() {
-        // Menggunakan teknik iframe/JSONP get ringan atau fetch standar
         fetch(GOOGLE_SHEETS_URL)
             .then(res => res.text())
             .then(text => {
@@ -2011,7 +2009,12 @@
             })
             .catch(err => console.log("Belum ada data di cloud atau gagal memuat:", err));
     }
-</script>
 
+    // Inisialisasi awal saat halaman pertama dimuat
+    loadFromCloud(); // <-- TARIK DATA DARI CLOUD SAAT HALAMAN DIBUKA
+    populateDropdowns();
+    toggleUnitDropdown('admin');
+    cekSesiLogin();
+</script>
 </body>
 </html>
