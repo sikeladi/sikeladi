@@ -1960,9 +1960,9 @@
         }
     }
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/library/d/1HVw2RF4vYwDBJ10y2ifdYOwgLtAguZAWAiJbJRZCzjAyNYav-CWoCuSR/4";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
-// 1. Fungsi Autosave ke Cloud (Mengirim data localStorage yang terstruktur)
+// 1. Fungsi Autosave ke Cloud (Anti-CORS menggunakan mode 'no-cors')
 function syncToCloud() {
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -1974,55 +1974,50 @@ function syncToCloud() {
         }
     }
 
-    // Gunakan Content-Type text/plain agar TIDAK terkena CORS Preflight (OPTIONS request) di Apps Script
     fetch(GOOGLE_SHEETS_URL, {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             action: "saveAll",
             payload: allData
         })
-    })
-    .then(res => res.json())
-    .then(res => {
-        if(res.status === 'success') {
-            console.log("Autosave berhasil disinkronkan ke Google Sheets!");
-        }
-    })
-    .catch(err => console.log("Gagal sync ke cloud:", err));
+    }).then(() => {
+        console.log("Data berhasil dikirim ke Google Sheets (Background)!");
+    }).catch(err => console.log("Gagal sync:", err));
 }
 
 // 2. Fungsi Load Data dari Cloud saat aplikasi dibuka
 function loadFromCloud() {
-    fetch(GOOGLE_SHEETS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "loadAll" })
-    })
-    .then(res => res.json())
-    .then(response => {
-        if (response && response.status === "success" && response.data) {
-            let cloudData = response.data;
-            if (Object.keys(cloudData).length > 0) {
-                for (let key in cloudData) {
-                    let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
-                    localStorage.setItem(key, val);
+    fetch(GOOGLE_SHEETS_URL + "?action=loadAll")
+        .then(res => res.text())
+        .then(text => {
+            try {
+                let response = JSON.parse(text);
+                if (response && response.status === "success" && response.data) {
+                    let cloudData = response.data;
+                    if (Object.keys(cloudData).length > 0) {
+                        for (let key in cloudData) {
+                            let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
+                            localStorage.setItem(key, val);
+                        }
+                        populateDropdowns();
+                        toggleUnitDropdown('admin');
+                        cekSesiLogin();
+                        console.log("Data berhasil dimuat dari Google Sheets!");
+                    }
                 }
-                populateDropdowns();
-                toggleUnitDropdown('admin');
-                cekSesiLogin();
-                console.log("Data berhasil dimuat dari Google Sheets!");
+            } catch(e) {
+                console.log("Menunggu data awal di cloud...");
             }
-        }
-    })
-    .catch(err => console.log("Belum ada data di cloud atau gagal memuat:", err));
+        })
+        .catch(err => console.log("Belum ada data di cloud atau gagal memuat:", err));
 }
 
 // 3. Jalankan Sinkronisasi Otomatis Setiap Kali Ada Perubahan di LocalStorage
 const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
-    // Debounce: Tunggu 1 detik setelah user berhenti mengetik/mengubah data sebelum mengirim ke Google Sheets
     clearTimeout(window.autoSaveTimer);
     window.autoSaveTimer = setTimeout(() => {
         syncToCloud();
@@ -2031,12 +2026,9 @@ localStorage.setItem = function(key, value) {
 
 // Inisialisasi awal saat halaman pertama dimuat
 loadFromCloud();
-
-    // Inisialisasi awal saat halaman pertama dimuat
-    loadFromCloud(); // <-- TARIK DATA DARI CLOUD SAAT HALAMAN DIBUKA
-    populateDropdowns();
-    toggleUnitDropdown('admin');
-    cekSesiLogin();
+populateDropdowns();
+toggleUnitDropdown('admin');
+cekSesiLogin();
 </script>
 </body>
 </html>
