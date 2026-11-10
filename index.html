@@ -1969,8 +1969,7 @@
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
-// 1. Fungsi Autosave ke Cloud (Anti-CORS menggunakan mode 'no-cors')
-// Fungsi untuk Simpan Manual ke Cloud
+// 1. Fungsi Simpan Manual ke Cloud (Aman & Terkendali)
 function syncToCloud() {
     if (!confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) return;
     
@@ -2002,7 +2001,7 @@ function syncToCloud() {
     });
 }
 
-// 2. Fungsi Load Data dari Cloud saat aplikasi dibuka
+// 2. Fungsi Load Data dari Cloud (Manual via Tombol)
 function loadFromCloud() {
     fetch(GOOGLE_SHEETS_URL + "?action=loadAll")
         .then(res => res.text())
@@ -2019,28 +2018,30 @@ function loadFromCloud() {
                         populateDropdowns();
                         toggleUnitDropdown('admin');
                         cekSesiLogin();
-                        console.log("Data berhasil dimuat dari Google Sheets!");
+                        alert("☁️ Data berhasil ditarik dan diperbarui dari Google Sheets!");
+                        location.reload();
                     }
                 }
             } catch(e) {
-                console.log("Menunggu data awal di cloud...");
+                alert("Belum ada data di cloud atau format data belum siap.");
             }
         })
-        .catch(err => console.log("Belum ada data di cloud atau gagal memuat:", err));
+        .catch(err => {
+            console.log("Gagal memuat dari cloud:", err);
+            alert("Gagal terhubung ke Google Sheets.");
+        });
 }
 
-// 3. Jalankan Sinkronisasi Otomatis Setiap Kali Ada Perubahan di LocalStorage
-const originalSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value) {
-    originalSetItem.apply(this, arguments);
-    clearTimeout(window.autoSaveTimer);
-    window.autoSaveTimer = setTimeout(() => {
-        syncToCloud();
-    }, 1000);
-};
+function loadFromCloudManually() {
+    if (confirm("Tarik data dari Google Sheets akan memperbarui data di browser. Lanjutkan?")) {
+        loadFromCloud();
+    }
+}
 
-// Inisialisasi awal saat halaman pertama dimuat
-// loadFromCloud(); // <-- Beri garis miring ganda (//) di depan ini supaya mati
+// --- INISIALISASI AWAL (AMAN DARI TIMPA DATA KOSONG) ---
+// loadFromCloud dikomentari agar data COA ribuan di browser Anda 100% AMAN
+// loadFromCloud(); 
+
 populateDropdowns();
 toggleUnitDropdown('admin');
 cekSesiLogin();
