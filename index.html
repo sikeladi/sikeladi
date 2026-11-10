@@ -1886,9 +1886,11 @@
     }
 
     function prosesLogout() {
-        localStorage.removeItem('active_session_role');
-        localStorage.removeItem('active_session_unit');
-        location.reload();
+    localStorage.removeItem('active_session_role');
+    localStorage.removeItem('active_session_unit');
+    // Hapus juga data cloud sementara dari memori lokal agar tidak melompat kembali
+    localStorage.clear();
+    location.reload();
     }
 
     function cekSesiLogin() {
