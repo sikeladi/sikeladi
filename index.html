@@ -1964,7 +1964,7 @@
     populateDropdowns();
     toggleUnitDropdown('admin');
     cekSesiLogin();
-// --- KONFIGURASI CLOUD GOOGLE SHEETS ---
+// --- KONFIGURASI CLOUD GOOGLE SHEETS (VERSI ANTI-CORS) ---
     const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbx5FFgjUtLalHrtNOSZXBQ3HumRVbX0_rijuDT_uS6ijvnqkMtt2JlKWqZCnzMVAA/exec";
 
     function syncToCloud() {
@@ -1978,34 +1978,39 @@
             }
         }
 
+        // Menggunakan mode no-cors dengan mengirim data sebagai string biasa di dalam body
         fetch(GOOGLE_SHEETS_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(allData)
+        }).then(() => {
+            console.log("Data berhasil disinkronkan ke cloud!");
         }).catch(err => console.log("Gagal sync:", err));
     }
 
     function loadFromCloud() {
+        // Menggunakan teknik iframe/JSONP get ringan atau fetch standar
         fetch(GOOGLE_SHEETS_URL)
-            .then(res => res.json())
-            .then(cloudData => {
-                if (cloudData && Object.keys(cloudData).length > 0) {
-                    for (let key in cloudData) {
-                        let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
-                        localStorage.setItem(key, val);
+            .then(res => res.text())
+            .then(text => {
+                if (text && text.trim() !== "") {
+                    try {
+                        let cloudData = JSON.parse(text);
+                        if (cloudData && Object.keys(cloudData).length > 0) {
+                            for (let key in cloudData) {
+                                let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
+                                localStorage.setItem(key, val);
+                            }
+                            cekSesiLogin();
+                            console.log("Data berhasil ditarik dari Google Sheets cloud!");
+                        }
+                    } catch(e) {
+                        console.log("Format data cloud belum valid.");
                     }
-                    cekSesiLogin();
                 }
             })
-            .catch(err => console.log("Belum ada data di cloud:", err));
+            .catch(err => console.log("Belum ada data di cloud atau gagal memuat:", err));
     }
-
-    // Inisialisasi awal saat halaman pertama dimuat
-    loadFromCloud(); 
-    populateDropdowns();
-    toggleUnitDropdown('admin');
-    cekSesiLogin();
 </script>
 
 </body>
