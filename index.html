@@ -1970,7 +1970,10 @@
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
 // 1. Fungsi Autosave ke Cloud (Anti-CORS menggunakan mode 'no-cors')
+// Fungsi untuk Simpan Manual ke Cloud
 function syncToCloud() {
+    if (!confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) return;
+    
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
         let key = localStorage.key(i);
@@ -1981,17 +1984,22 @@ function syncToCloud() {
         }
     }
 
+    console.log("Mengirim data ke Google Sheets...");
+
     fetch(GOOGLE_SHEETS_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: { "Content-Type": "text/plain" }, // <-- Ganti jadi text/plain
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
             action: "saveAll",
             payload: allData
         })
     }).then(() => {
-        console.log("Data berhasil dikirim ke Google Sheets (Background)!");
-    }).catch(err => console.log("Gagal sync:", err));
+        alert("🚀 Data berhasil dikirim dan disinkronkan ke Google Sheets!");
+    }).catch(err => {
+        console.error("Gagal sync:", err);
+        alert("Gagal mengirim data ke cloud. Periksa koneksi internet.");
+    });
 }
 
 // 2. Fungsi Load Data dari Cloud saat aplikasi dibuka
