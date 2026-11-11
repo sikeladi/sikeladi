@@ -2166,7 +2166,7 @@
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
-// Fungsi Simpan Manual ke Cloud dengan Pembersihan Tipe Data Akun
+// Fungsi Simpan Manual ke Cloud
 function syncToCloud() {
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -2175,13 +2175,11 @@ function syncToCloud() {
         
         try {
             let parsed = JSON.parse(rawVal);
-            // Jika data berupa array (seperti master COA atau jurnal), paksa nomor akun jadi string
             if (Array.isArray(parsed)) {
                 parsed = parsed.map(item => {
                     if (item && typeof item === 'object') {
                         for (let prop in item) {
                             let lowerP = prop.toLowerCase();
-                            // Jika properti mengandung kata 'akun' atau 'kode', pastikan nilainya string
                             if ((lowerP.includes('akun') || lowerP.includes('kode')) && item[prop] !== null && item[prop] !== undefined) {
                                 item[prop] = String(item[prop]);
                             }
@@ -2198,54 +2196,63 @@ function syncToCloud() {
 
     console.log("Mengirim data bersih ke Google Sheets...");
 
+    // Catatan: Google Apps Script memerlukan payload terbungkus JSON string via text/plain agar tidak terhadang preflight CORS
     fetch(GOOGLE_SHEETS_URL, {
         method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
             action: "saveAll",
             payload: allData
         })
-    }).then(() => {
-        console.log("Data berhasil dikirim!");
-    }).catch(err => {
+    })
+    .then(res => res.json())
+    .then(resData => {
+        if (resData.status === 'success') {
+            console.log("Data berhasil dikirim!");
+            alert("🚀 Data berhasil dikirim dan disinkronkan ke Google Sheets!");
+        } else {
+            console.error("Server Error:", resData.message);
+            alert("⚠️ Gagal sync: " + resData.message);
+        }
+    })
+    .catch(err => {
         console.error("Gagal sync:", err);
+        alert("⚠️ Gagal terhubung ke Google Sheets.");
     });
 }
 
 function syncToCloudManually() {
     if (confirm("Kirim seluruh data lokal browser (COA, Transaksi, Mitra, Profil) ke Google Sheets?")) {
         syncToCloud();
-        alert("🚀 Data berhasil dikirim dan disinkronkan ke Google Sheets!");
     }
 }
 
 function loadFromCloud() {
     fetch(GOOGLE_SHEETS_URL + "?action=loadAll")
-        .then(res => res.text())
-        .then(text => {
-            try {
-                let response = JSON.parse(text);
-                if (response && response.status === "success" && response.data) {
-                    let cloudData = response.data;
-                    if (Object.keys(cloudData).length > 0) {
-                        for (let key in cloudData) {
-                            let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
-                            localStorage.setItem(key, val);
-                        }
-                        populateDropdowns();
-                        toggleUnitDropdown('admin');
-                        cekSesiLogin();
-                        alert("☁️ Data berhasil ditarik dan diperbarui dari Google Sheets!");
-                        location.reload();
+        .then(res => res.json())
+        .then(response => {
+            if (response && response.status === "success" && response.data) {
+                let cloudData = response.data;
+                if (Object.keys(cloudData).length > 0) {
+                    for (let key in cloudData) {
+                        let val = typeof cloudData[key] === 'object' ? JSON.stringify(cloudData[key]) : cloudData[key];
+                        localStorage.setItem(key, val);
                     }
+                    populateDropdowns();
+                    toggleUnitDropdown('admin');
+                    cekSesiLogin();
+                    alert("☁️ Data berhasil ditarik dan diperbarui dari Google Sheets!");
+                    location.reload();
+                } else {
+                    alert("ℹ️ Tidak ada data tersimpan di Google Sheets.");
                 }
-            } catch(e) {
-                console.log("Format data cloud belum siap.");
+            } else {
+                alert("⚠️ Gagal memuat data: " + (response.message || "Format data belum siap."));
             }
         })
         .catch(err => {
-            console.log("Gagal memuat dari cloud:", err);
+            console.error("Gagal memuat dari cloud:", err);
+            alert("⚠️ Gagal terhubung ke server cloud.");
         });
 }
 
