@@ -1969,16 +1969,37 @@
 // --- KONFIGURASI CLOUD GOOGLE SHEETS ---
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxZnfAFwA2trALu4u51Z6pEAszsizYNbAYtLc_TLSVhgDH8-6BEj0ulDmxOuMjh_4ZDUA/exec";
 
+// Fungsi Simpan Manual ke Cloud dengan Pembersihan Tipe Data Akun
 function syncToCloud() {
     let allData = {};
     for (let i = 0; i < localStorage.length; i++) {
         let key = localStorage.key(i);
+        let rawVal = localStorage.getItem(key);
+        
         try {
-            allData[key] = JSON.parse(localStorage.getItem(key));
+            let parsed = JSON.parse(rawVal);
+            // Jika data berupa array (seperti master COA atau jurnal), paksa nomor akun jadi string
+            if (Array.isArray(parsed)) {
+                parsed = parsed.map(item => {
+                    if (item && typeof item === 'object') {
+                        for (let prop in item) {
+                            let lowerP = prop.toLowerCase();
+                            // Jika properti mengandung kata 'akun' atau 'kode', pastikan nilainya string
+                            if ((lowerP.includes('akun') || lowerP.includes('kode')) && item[prop] !== null && item[prop] !== undefined) {
+                                item[prop] = String(item[prop]);
+                            }
+                        }
+                    }
+                    return item;
+                });
+            }
+            allData[key] = parsed;
         } catch (err) {
-            allData[key] = localStorage.getItem(key);
+            allData[key] = rawVal;
         }
     }
+
+    console.log("Mengirim data bersih ke Google Sheets...");
 
     fetch(GOOGLE_SHEETS_URL, {
         method: "POST",
@@ -1989,7 +2010,7 @@ function syncToCloud() {
             payload: allData
         })
     }).then(() => {
-        console.log("Sync background sukses.");
+        console.log("Data berhasil dikirim!");
     }).catch(err => {
         console.error("Gagal sync:", err);
     });
